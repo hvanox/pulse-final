@@ -165,6 +165,9 @@ export default function LessonScreen({ lessonId, onComplete, onBack }) {
             onNext={nextScreen}
           />
         )}
+        {screen.type === "text" && (
+          <TextScreen screen={screen} onNext={nextScreen} isLast={isLast} />
+        )}
         {screen.type === "result" && (
           <ResultScreen
             screen={screen}
@@ -180,6 +183,22 @@ export default function LessonScreen({ lessonId, onComplete, onBack }) {
 }
 
 // ─── Screen Components ───
+
+function TextScreen({ screen, onNext, isLast }) {
+  return (
+    <div style={s.screenInner}>
+      {screen.title && <div style={s.hookTitle}>{screen.title}</div>}
+      {screen.highlight && <div style={s.highlight}>{screen.highlight}</div>}
+      <div style={{ ...s.hookText, whiteSpace: "pre-line" }}>{screen.content || screen.text}</div>
+      {screen.tip && (
+        <div style={s.tipBox}>💡 {screen.tip}</div>
+      )}
+      <button style={s.primaryBtn} onClick={onNext}>
+        {isLast ? "Завершить урок ✓" : "Далее →"}
+      </button>
+    </div>
+  )
+}
 
 function HookScreen({ screen, onNext }) {
   return (
@@ -649,6 +668,10 @@ const s = {
   highlight: {
     padding: "8px 16px", background: "rgba(255,221,45,0.1)", borderRadius: 8,
     color: "#ffdd2d", fontSize: 14, fontWeight: 700, textAlign: "center",
+  },
+  tipBox: {
+    padding: "12px 16px", background: "rgba(255,221,45,0.12)", borderRadius: 10,
+    color: "#8b6914", fontSize: 14, lineHeight: 1.6, marginBottom: 16,
   },
   hookTitle: { fontSize: 24, fontWeight: 800, color: "#1a1a1a" },
   hookText: { fontSize: 16, color: "rgba(0,0,0,0.6)", lineHeight: 1.7, whiteSpace: "pre-line" },
