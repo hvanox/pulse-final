@@ -18,14 +18,23 @@ export default function OnboardingScreen({ onComplete, userName, onLogout }) {
   const [answers, setAnswers] = useState([])
   const [result, setResult] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [loadingQuestions, setLoadingQuestions] = useState(true)
+  const [error, setError] = useState(null)
   const [showConfetti, setShowConfetti] = useState(false)
   const timerRef = useRef(null)
   const startTimeRef = useRef(null)
 
   useEffect(() => {
-    getOnboardingQuestions().then(data => {
-      setQuestions(data.questions || [])
-    })
+    setLoadingQuestions(true)
+    getOnboardingQuestions()
+      .then(data => {
+        setQuestions(data.questions || [])
+        setLoadingQuestions(false)
+      })
+      .catch(() => {
+        setError("Не удалось загрузить тест. Проверьте соединение.")
+        setLoadingQuestions(false)
+      })
   }, [])
 
   const startQuiz = () => {
@@ -70,13 +79,18 @@ export default function OnboardingScreen({ onComplete, userName, onLogout }) {
           time_ms: Date.now() - (startTimeRef.current || Date.now()),
         })
       }
-      submitOnboarding(allAnswers).then(res => {
-        setResult(res)
-        setPhase("result")
-        setLoading(false)
-        setShowConfetti(true)
-        setTimeout(() => setShowConfetti(false), 3000)
-      })
+      submitOnboarding(allAnswers)
+        .then(res => {
+          setResult(res)
+          setPhase("result")
+          setLoading(false)
+          setShowConfetti(true)
+          setTimeout(() => setShowConfetti(false), 3000)
+        })
+        .catch(() => {
+          setLoading(false)
+          setError("Не удалось отправить ответы. Проверьте соединение.")
+        })
     }
   }
 
@@ -94,6 +108,34 @@ export default function OnboardingScreen({ onComplete, userName, onLogout }) {
       )}
     </div>
   )
+
+  // ─── LOADING / ERROR ───
+  if (loadingQuestions) {
+    return (
+      <div style={s.page}>
+        {accountBadge}
+        <div style={s.loadingCard}>
+          <div style={{ fontSize: 48, marginBottom: 16 }}>📝</div>
+          <div style={{ fontSize: 18, fontWeight: 700, color: "#fff", marginBottom: 8 }}>Загрузка вопросов...</div>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div style={s.page}>
+        {accountBadge}
+        <div style={s.loadingCard}>
+          <div style={{ fontSize: 48, marginBottom: 16 }}>⚠️</div>
+          <div style={{ fontSize: 18, fontWeight: 700, color: "#fff", marginBottom: 8 }}>{error}</div>
+          <button style={s.startBtn} onClick={() => { setError(null); setLoadingQuestions(true); getOnboardingQuestions().then(data => { setQuestions(data.questions || []); setLoadingQuestions(false) }).catch(() => { setError("Не удалось загрузить тест. Проверьте соединение."); setLoadingQuestions(false) }) }}>
+            Попробовать снова
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   // ─── WELCOME SCREEN ───
   if (phase === "welcome") {

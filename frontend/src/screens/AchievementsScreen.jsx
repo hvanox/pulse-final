@@ -4,15 +4,30 @@ import { getAchievements } from "../api"
 export default function AchievementsScreen() {
   const [achievements, setAchievements] = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
   const [filter, setFilter] = useState("all")
 
-  useEffect(() => {
+  const loadAchievements = () => {
+    setLoading(true)
+    setError(null)
     getAchievements()
       .then(a => { setAchievements(a); setLoading(false) })
-      .catch(() => setLoading(false))
-  }, [])
+      .catch(err => { setError(err.message || "Не удалось загрузить достижения"); setLoading(false) })
+  }
+
+  useEffect(() => { loadAchievements() }, [])
 
   if (loading) return <div style={s.loading}>Загрузка...</div>
+
+  if (error) return (
+    <div style={s.loading}>
+      <div style={{ fontSize: 48, marginBottom: 16 }}>⚠️</div>
+      <div style={{ marginBottom: 16 }}>{error}</div>
+      <button onClick={loadAchievements} style={{ padding: "10px 24px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.15)", background: "transparent", color: "#FFD600", cursor: "pointer", fontFamily: "inherit", fontSize: 14 }}>
+        Попробовать снова
+      </button>
+    </div>
+  )
 
   const categories = [
     { id: "all", label: "Все" },

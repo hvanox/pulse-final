@@ -4,17 +4,31 @@ import { getDashboard, marketEventAction, checkPortfolio } from "../api"
 export default function HomeScreen({ onStartLesson, onNavigate }) {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
     setLoading(true)
+    setError(null)
     getDashboard()
       .then(d => { setData(d); setLoading(false) })
-      .catch(() => setLoading(false))
+      .catch(err => { setError(err.message || "Не удалось загрузить данные"); setLoading(false) })
     checkPortfolio().catch(() => {})
   }, [])
 
-  if (loading || !data) {
+  if (loading) {
     return <div style={s.loading}>Загрузка...</div>
+  }
+
+  if (error || !data) {
+    return (
+      <div style={s.loading}>
+        <div style={{ fontSize: 48, marginBottom: 16 }}>⚠️</div>
+        <div style={{ marginBottom: 16 }}>{error || "Не удалось загрузить данные"}</div>
+        <button onClick={() => { setLoading(true); setError(null); getDashboard().then(d => { setData(d); setLoading(false) }).catch(err => { setError(err.message); setLoading(false) }) }} style={{ padding: "10px 24px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.15)", background: "transparent", color: "#FFD600", cursor: "pointer", fontFamily: "inherit", fontSize: 14 }}>
+          Попробовать снова
+        </button>
+      </div>
+    )
   }
 
   const { portfolio, next_lesson, daily_missions, market_event, module_progress, stats } = data
