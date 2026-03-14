@@ -2,13 +2,13 @@ import json
 from datetime import datetime
 
 TOPICS = [
-    {"id": "stocks", "name": "Акции"},
-    {"id": "etf", "name": "ETF и фонды"},
-    {"id": "dividends", "name": "Дивиденды"},
-    {"id": "risk", "name": "Риск"},
-    {"id": "diversification", "name": "Диверсификация"},
-    {"id": "portfolio", "name": "Портфель"},
-    {"id": "market_logic", "name": "Логика рынка"},
+    {"id": "stocks", "name": "Акции", "icon": "📈"},
+    {"id": "etf", "name": "ETF и фонды", "icon": "🏦"},
+    {"id": "dividends", "name": "Дивиденды", "icon": "💰"},
+    {"id": "risk", "name": "Риск", "icon": "⚠️"},
+    {"id": "diversification", "name": "Диверсификация", "icon": "🎯"},
+    {"id": "portfolio", "name": "Портфель", "icon": "💼"},
+    {"id": "market_logic", "name": "Логика рынка", "icon": "🧠"},
 ]
 
 TOPIC_MAP = {t["id"]: t for t in TOPICS}
@@ -17,6 +17,10 @@ ONBOARDING_LEVELS = [
     {
         "id": "novice",
         "name": "Новичок",
+        "name_full": "Начинающий инвестор",
+        "icon": "🌱",
+        "color": "#4caf50",
+        "description": "Ты только начинаешь путь в мир инвестиций. Мы проведём тебя от основ к первым сделкам!",
         "score_range": [0.0, 0.39],
         "start_module": "m1",
         "start_lesson": "1.1",
@@ -25,6 +29,10 @@ ONBOARDING_LEVELS = [
     {
         "id": "basic",
         "name": "Базовый",
+        "name_full": "Осознанный инвестор",
+        "icon": "📊",
+        "color": "#FFD600",
+        "description": "У тебя есть базовое понимание рынка. Время углубить знания и начать практику!",
         "score_range": [0.4, 0.69],
         "start_module": "m2",
         "start_lesson": "2.1",
@@ -33,6 +41,10 @@ ONBOARDING_LEVELS = [
     {
         "id": "advanced",
         "name": "Продвинутый",
+        "name_full": "Опытный инвестор",
+        "icon": "🚀",
+        "color": "#7c4dff",
+        "description": "Отличные знания! Ты готов к продвинутым стратегиям и серьёзному портфелю.",
         "score_range": [0.7, 1.0],
         "start_module": "m3",
         "start_lesson": "3.1",
@@ -220,6 +232,35 @@ def score_onboarding(answers, questions):
     strong_topics = [x for x in sorted_topics if x["score"] >= 0.7][:3]
     weak_topics = [x for x in sorted_topics if x["score"] < 0.5][:3]
 
+    # Learning plan
+    learning_plan = []
+    for wt in weak_topics:
+        learning_plan.append({
+            "action": f"Изучить тему «{wt['name']}»",
+            "reason": f"Результат {int(wt['score']*100)}% — нужно подтянуть",
+            "priority": "focus",
+            "topic": wt["id"],
+        })
+    mid_topics = [x for x in sorted_topics if 0.5 <= x["score"] < 0.7]
+    for mt in mid_topics[:2]:
+        learning_plan.append({
+            "action": f"Закрепить тему «{mt['name']}»",
+            "reason": f"Результат {int(mt['score']*100)}% — почти отлично",
+            "priority": "high",
+            "topic": mt["id"],
+        })
+    if strong_topics:
+        learning_plan.append({
+            "action": "Перейти к продвинутым стратегиям",
+            "reason": f"Сильные темы: {', '.join(t['name'] for t in strong_topics[:2])}",
+            "priority": "normal",
+        })
+    learning_plan.append({
+        "action": "Собрать первый портфель",
+        "reason": "Применить знания на практике в симуляторе",
+        "priority": "high",
+    })
+
     return {
         "level": level,
         "score": round(normalized, 2),
@@ -227,6 +268,7 @@ def score_onboarding(answers, questions):
         "topic_scores": topic_scores,
         "strong_topics": strong_topics,
         "weak_topics": weak_topics,
+        "learning_plan": learning_plan,
         "recommended_start": {"module": level["start_module"], "lesson": level["start_lesson"]},
         "xp_bonus": level["xp_bonus"],
         "details": details,
