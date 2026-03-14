@@ -6,24 +6,20 @@ export default function LearnScreen({ onStartLesson }) {
   const [expandedModule, setExpandedModule] = useState(null)
   const [lessons, setLessons] = useState({})
   const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    getModules().then(m => { setModules(m); setLoading(false) }).catch(() => setLoading(false))
-  }, [])
+  const [error, setError] = useState(null)
+  const loadMods = () => { setLoading(true); setError(null); getModules().then(m => { setModules(m); setLoading(false) }).catch(e => { setError(e.message||"Ошибка"); setLoading(false) }) }
+  useEffect(() => { loadMods() }, [])
 
   const toggleModule = async (moduleId) => {
-    if (expandedModule === moduleId) {
-      setExpandedModule(null)
-      return
-    }
+    if (expandedModule === moduleId) { setExpandedModule(null); return }
     setExpandedModule(moduleId)
     if (!lessons[moduleId]) {
-      const data = await getModuleLessons(moduleId)
-      setLessons(prev => ({ ...prev, [moduleId]: data }))
+      try { const data = await getModuleLessons(moduleId); setLessons(prev => ({ ...prev, [moduleId]: data })) } catch {}
     }
   }
 
   if (loading) return <div style={s.loading}>Загрузка...</div>
+  if (error) return <div style={s.loading}><div style={{fontSize:48,marginBottom:16}}>⚠️</div><div style={{marginBottom:16}}>{error}</div><button onClick={loadMods} style={{padding:"10px 24px",borderRadius:10,border:"1px solid rgba(255,255,255,0.15)",background:"transparent",color:"#FFD600",cursor:"pointer",fontFamily:"inherit"}}>Повторить</button></div>
 
   return (
     <div style={s.page}>

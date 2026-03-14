@@ -11,12 +11,13 @@ export default function PortfolioScreen() {
   const [tradeShares, setTradeShares] = useState(1)
   const [tradeMsg, setTradeMsg] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
   const refresh = () => {
-    setLoading(true)
+    setLoading(true); setError(null)
     Promise.all([getPortfolio(), getStocks(), getTransactions()])
       .then(([p, s, t]) => { setPortfolio(p); setStocks(s); setTransactions(t); setLoading(false) })
-      .catch(() => setLoading(false))
+      .catch(e => { setError(e.message||"Ошибка"); setLoading(false) })
   }
 
   useEffect(() => { refresh() }, [])
@@ -24,24 +25,20 @@ export default function PortfolioScreen() {
   const handleTrade = () => {
     if (!selectedStock || tradeShares < 1) return
     setTradeMsg(null)
-    trade(selectedStock.ticker, tradeShares, tradeAction).then(res => {
-      if (res.ok) {
-        const msg = tradeAction === "buy"
-          ? `Куплено ${tradeShares} акций ${selectedStock.name} за ${res.total?.toLocaleString("ru-RU")} ₽`
-          : `Продано ${tradeShares} акций ${selectedStock.name} за ${res.total?.toLocaleString("ru-RU")} ₽`
-        setTradeMsg({ type: "success", text: msg })
-        setSelectedStock(null)
-        setTradeShares(1)
-        refresh()
-      } else {
-        setTradeMsg({ type: "error", text: res.error })
-      }
-    })
+    trade(selectedStock.ticker, tradeShares, tradeAction)
+      .then(res => {
+        if (res.ok) {
+          const msg = tradeAction === "buy"
+            ? `Куплено ${tradeShares} акций ${selectedStock.name} за ${res.total?.toLocaleString("ru-RU")} ₽`
+            : `Продано ${tradeShares} акций ${selectedStock.name} за ${res.total?.toLocaleString("ru-RU")} ₽`
+          setTradeMsg({ type: "success", text: msg }); setSelectedStock(null); setTradeShares(1); refresh()
+        } else { setTradeMsg({ type: "error", text: res.error }) }
+      })
+      .catch(e => setTradeMsg({ type: "error", text: e.message||"Ошибка сделки" }))
   }
 
-  if (loading || !portfolio) {
-    return <div style={s.loading}>Загрузка...</div>
-  }
+  if (loading) return <div style={s.loading}>Загрузка...</div>
+  if (error || !portfolio) return <div style={s.loading}><div style={{fontSize:48,marginBottom:16}}>⚠️</div><div style={{marginBottom:16}}>{error||"Ошибка"}</div><button onClick={refresh} style={{padding:"10px 24px",borderRadius:10,border:"1px solid rgba(255,255,255,0.15)",background:"transparent",color:"#FFD600",cursor:"pointer",fontFamily:"inherit"}}>Повторить</button></div>
 
   return (
     <div style={s.page}>

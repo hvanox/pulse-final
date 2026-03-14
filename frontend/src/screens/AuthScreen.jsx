@@ -13,22 +13,29 @@ export default function AuthScreen({ onAuth }) {
     e.preventDefault()
     setError("")
     setLoading(true)
-
-    if (mode === "login") {
-      const res = await loginUser(email, password)
+    try {
+      if (mode === "login") {
+        const res = await loginUser(email, password)
+        setLoading(false)
+        if (!res.ok) return setError(res.error || "Ошибка входа")
+        setUserId(res.email)
+        localStorage.setItem("pulse_name", res.name)
+        onAuth(res.name, false)
+      } else {
+        if (!name.trim()) return setLoading(false) || setError("Введите имя")
+        const res = await registerUser(email, name, password)
+        setLoading(false)
+        if (!res.ok) return setError(res.error || "Ошибка регистрации")
+        setUserId(res.email)
+        localStorage.setItem("pulse_name", res.name)
+        onAuth(res.name, true)
+      }
+    } catch (err) {
       setLoading(false)
-      if (!res.ok) return setError(res.error)
-      setUserId(res.email)
-      localStorage.setItem("pulse_name", res.name)
-      onAuth(res.name, false) // login → not new user
-    } else {
-      if (!name.trim()) return setLoading(false) || setError("Введите имя")
-      const res = await registerUser(email, name, password)
-      setLoading(false)
-      if (!res.ok) return setError(res.error)
-      setUserId(res.email)
-      localStorage.setItem("pulse_name", res.name)
-      onAuth(res.name, true) // register → new user → show onboarding
+      const msg = err.message || ""
+      if (msg.includes("user_already_exists")) setError("Пользователь уже существует")
+      else if (msg.includes("invalid_credentials")) setError("Неверная почта или пароль")
+      else setError(msg || "Произошла ошибка")
     }
   }
 

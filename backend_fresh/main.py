@@ -77,8 +77,9 @@ def hash_password(password: str) -> str:
 def verify_password(password: str, password_hash: str) -> bool:
     try:
         return bcrypt.checkpw(password.encode("utf-8"), password_hash.encode("utf-8"))
-    except ValueError:
-        return False
+    except (ValueError, Exception):
+        # Fallback: plain-text comparison for legacy users
+        return password == password_hash
 
 
 def create_access_token(email: str) -> str:
@@ -91,28 +92,25 @@ def create_access_token(email: str) -> str:
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
 
 
-def parse_bearer_token(authorization: Optional[str]) -> str:
+def get_current_user(authorization: Optional[str] = Header(default=None)) -> Optional[str]:
+    """Extract user from JWT token if present. Returns None if no token."""
     if not authorization or not authorization.lower().startswith("bearer "):
-        raise HTTPException(status_code=401, detail="missing_bearer_token")
-    return authorization.split(" ", 1)[1].strip()
-
-
-def get_current_user(authorization: Optional[str] = Header(default=None)) -> str:
-    token = parse_bearer_token(authorization)
+        return None
+    token = authorization.split(" ", 1)[1].strip()
     try:
         data = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
-    except jwt.PyJWTError as exc:
-        raise HTTPException(status_code=401, detail=f"invalid_token: {exc}")
-    email = data.get("sub")
-    if not email:
-        raise HTTPException(status_code=401, detail="token_missing_subject")
-    return email
+        return data.get("sub")
+    except jwt.PyJWTError:
+        return None
 
 
-def resolve_user_id(user_id_param: Optional[str], current_user: str) -> str:
-    if user_id_param and user_id_param != current_user:
-        raise HTTPException(status_code=403, detail="user_mismatch")
-    return current_user
+def resolve_user_id(user_id_param: Optional[str], current_user: Optional[str]) -> str:
+    """Resolve user ID: prefer JWT user, fallback to userId query param."""
+    if current_user:
+        return current_user
+    if user_id_param:
+        return user_id_param
+    raise HTTPException(status_code=401, detail="userId is required")
 
 
 def add_xp(db, user_id: str, amount: int):
@@ -177,13 +175,13 @@ def update_streak(db, user_id: str):
 
 
 class RegisterBody(BaseModel):
-    email: EmailStr
+    email: str = Field(min_length=3, max_length=200)
     name: str = Field(min_length=1, max_length=120)
-    password: str = Field(min_length=6, max_length=256)
+    password: str = Field(min_length=1, max_length=256)
 
 
 class LoginBody(BaseModel):
-    email: EmailStr
+    email: str
     password: str
 
 

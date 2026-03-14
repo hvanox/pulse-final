@@ -8,7 +8,7 @@ import AchievementsScreen from "./screens/AchievementsScreen"
 import SettingsScreen from "./screens/SettingsScreen"
 import AuthScreen from "./screens/AuthScreen"
 import OnboardingScreen from "./screens/OnboardingScreen"
-import { setUserId, getOnboardingStatus, loginUser } from "./api"
+import { setUserId, getOnboardingStatus, loginUser, clearAuth } from "./api"
 
 export default function App() {
   const [screen, setScreen] = useState("home")
@@ -64,9 +64,7 @@ export default function App() {
   const handleLogout = () => {
     setUser(null)
     setNeedsOnboarding(false)
-    localStorage.removeItem("pulse_name")
-    localStorage.removeItem("pulse_email")
-    setUserId("demo-user-1")
+    clearAuth()
   }
 
   const handleNavigate = (id) => {

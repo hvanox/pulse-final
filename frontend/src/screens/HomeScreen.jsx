@@ -4,18 +4,12 @@ import { getDashboard, marketEventAction, checkPortfolio } from "../api"
 export default function HomeScreen({ onStartLesson, onNavigate }) {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const load = () => { setLoading(true); setError(null); getDashboard().then(d => { setData(d); setLoading(false) }).catch(e => { setError(e.message||"Ошибка"); setLoading(false) }); checkPortfolio().catch(() => {}) }
+  useEffect(() => { load() }, [])
 
-  useEffect(() => {
-    setLoading(true)
-    getDashboard()
-      .then(d => { setData(d); setLoading(false) })
-      .catch(() => setLoading(false))
-    checkPortfolio().catch(() => {})
-  }, [])
-
-  if (loading || !data) {
-    return <div style={s.loading}>Загрузка...</div>
-  }
+  if (loading) return <div style={s.loading}>Загрузка...</div>
+  if (error || !data) return <div style={s.loading}><div style={{fontSize:48,marginBottom:16}}>⚠️</div><div style={{marginBottom:16}}>{error||"Ошибка"}</div><button onClick={load} style={{padding:"10px 24px",borderRadius:10,border:"1px solid rgba(255,255,255,0.15)",background:"transparent",color:"#FFD600",cursor:"pointer",fontFamily:"inherit"}}>Повторить</button></div>
 
   const { portfolio, next_lesson, daily_missions, market_event, module_progress, stats } = data
 
