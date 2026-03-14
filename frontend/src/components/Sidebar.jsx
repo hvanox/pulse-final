@@ -12,8 +12,8 @@ export default function Sidebar({ active, onNavigate, userName, onLogout, refres
   const xp = data?.xp || 0
   const xpProgress = data?.level_info?.progress || 0
   const streak = data?.streak || 0
-  const portfolioValue = data?.portfolio?.total_value || 1000000
-  const portfolioPnl = data?.portfolio?.total_pnl_pct || 0
+  const portfolioValue = data?.portfolio?.total_value ?? 0
+  const portfolioPnl = data?.portfolio?.total_pnl_pct ?? 0
 
   const tabs = [
     { id: "home", label: "Главная", icon: "/icons/free-icon-home-6529015.png" },
