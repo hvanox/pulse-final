@@ -25,6 +25,22 @@ export default function PortfolioScreen({ onRefresh }) {
   const handleTrade = () => {
     if (!selectedStock || tradeShares < 1) return
     setTradeMsg(null)
+    const price = selectedStock.current_price || selectedStock.price || 0
+    const cost = price * tradeShares
+    // Pre-validation
+    if (tradeAction === "buy" && cost > portfolio.balance) {
+      const maxShares = Math.floor(portfolio.balance / price)
+      setTradeMsg({ type: "error", text: `Недостаточно средств. Доступно ${portfolio.balance.toLocaleString("ru-RU")} ₽. Максимум ${maxShares} акций.` })
+      return
+    }
+    if (tradeAction === "sell") {
+      const holding = portfolio.holdings?.find(h => h.ticker === selectedStock.ticker)
+      const owned = holding?.shares || 0
+      if (tradeShares > owned) {
+        setTradeMsg({ type: "error", text: `У вас только ${owned} акций ${selectedStock.name}` })
+        return
+      }
+    }
     trade(selectedStock.ticker, tradeShares, tradeAction)
       .then(res => {
         if (res.ok) {
@@ -34,7 +50,12 @@ export default function PortfolioScreen({ onRefresh }) {
           setTradeMsg({ type: "success", text: msg }); setSelectedStock(null); setTradeShares(1); refresh(); onRefresh?.(); window.dispatchEvent(new Event("pulse-trade"))
         } else { setTradeMsg({ type: "error", text: res.error }) }
       })
-      .catch(e => setTradeMsg({ type: "error", text: e.message||"Ошибка сделки" }))
+      .catch(e => {
+        const msg = e.message || ""
+        if (msg.includes("insufficient_funds")) setTradeMsg({ type: "error", text: "Недостаточно средств" })
+        else if (msg.includes("not_enough_shares")) setTradeMsg({ type: "error", text: "Недостаточно акций для продажи" })
+        else setTradeMsg({ type: "error", text: msg || "Ошибка сделки" })
+      })
   }
 
   if (loading) return <div style={s.loading}>Загрузка...</div>
