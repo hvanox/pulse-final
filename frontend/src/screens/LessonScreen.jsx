@@ -109,9 +109,10 @@ export default function LessonScreen({ lessonId, aiLessonData, onComplete, onBac
       setTotalQuiz(t => t + 1)
       const isCorrect = selected === screen.correct_index
       if (isCorrect) setCorrectCount(c => c + 1)
-      // Record to ML engine
-      const topic = lesson.skill_topic || "stocks"
-      recordAdaptiveAnswer(topic, `lesson_${lessonId}_${screenIdx}`, isCorrect, 0, "lesson").catch(() => {})
+      // Record to ML engine — для AI-уроков берём topic из вопроса
+      const topic = screen.topic || lesson.skill_topic || "stocks"
+      const qId = lesson.generated ? `ai_${lesson.id}_${screenIdx}` : `lesson_${lessonId}_${screenIdx}`
+      recordAdaptiveAnswer(topic, qId, isCorrect, 0, lesson.generated ? "ai_lesson" : "lesson").catch(() => {})
     }
   }
 

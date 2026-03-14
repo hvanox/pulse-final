@@ -166,35 +166,28 @@ async def generate_question(topic: str, difficulty: int, recent_questions: list[
 
 # ─── Генерация полных уроков ───
 
-LESSON_SYSTEM_PROMPT = """Ты — преподаватель финансовой грамотности. Генерируешь уроки для мобильного приложения.
+LESSON_SYSTEM_PROMPT = """Ты — преподаватель финансовой грамотности. Генерируешь персональные уроки для мобильного приложения.
 
-Тебе дан список тем с уровнем знаний пользователя (mastery от 0.0 до 1.0).
-Слабые темы (mastery < 0.5) — пользователь плохо знает, нужно объяснить просто.
-Сильные темы (mastery >= 0.7) — пользователь хорошо знает, можно дать сложный вопрос.
+Тебе даны:
+- Темы со знаниями пользователя (mastery от 0 до 100%)
+- Указание какие темы учить и на каком уровне
+- Количество экранов объяснения и вопросов
 
-Сгенерируй урок в виде JSON-массива экранов. Урок должен содержать:
-1. 2 текстовых экрана с понятным объяснением СЛАБОЙ темы (простым языком, с примерами)
-2. 1 лёгкий вопрос по слабой теме (чтобы закрепить)
-3. 1 сложный вопрос по сильной теме (чтобы углубить знания)
-4. 1 итоговый текстовый экран с кратким выводом
-
-Формат СТРОГО JSON без markdown:
+Генерируй СТРОГО в JSON без markdown. Формат:
 {
   "title": "Название урока",
   "screens": [
-    {"type": "text", "title": "Заголовок", "content": "Текст объяснения..."},
     {"type": "text", "title": "Заголовок", "content": "Текст..."},
-    {"type": "quiz", "title": "Проверим", "question": "Вопрос?", "options": ["A","B","C","D"], "correct_index": 0, "explanation": "Почему..."},
-    {"type": "quiz", "title": "Сложный вопрос", "question": "Вопрос?", "options": ["A","B","C","D"], "correct_index": 0, "explanation": "Почему..."},
-    {"type": "text", "title": "Итог", "content": "Вывод..."}
+    {"type": "quiz", "title": "Вопрос", "question": "?", "options": ["A","B","C","D"], "correct_index": 0, "explanation": "Почему...", "topic": "topic_id"}
   ]
 }
 
 Правила:
 - Русский язык
-- Объяснения простые, с реальными примерами и цифрами
-- В каждом вопросе ровно 4 варианта, 1 правильный
+- Объяснения простые, с примерами из жизни и цифрами
+- В каждом quiz ровно 4 варианта, 1 правильный
 - Неправильные варианты правдоподобные
+- У каждого quiz обязательно поле "topic" с id темы
 - Весь контент про инвестиции и финансы"""
 
 
@@ -232,35 +225,52 @@ def analyze_mastery(mastery: dict) -> dict:
 
 
 def get_lesson_stubs(mastery: dict) -> list[dict]:
-    """Возвращает список заглушек для AI-уроков на основе mastery."""
+    """
+    Возвращает список AI-уроков на основе mastery.
+    Адаптивность:
+    - mastery < 0.3: больше объяснений, лёгкие вопросы
+    - mastery 0.3-0.6: меньше объяснений, средние вопросы
+    - mastery > 0.6: минимум объяснений, сложные вопросы
+    """
     analysis = analyze_mastery(mastery)
     weak = analysis["weak"]
     strong = analysis["strong"]
 
     stubs = []
-    # Генерируем заглушку для каждой слабой темы (макс 3)
-    for i, w in enumerate(weak[:3]):
-        strong_topic = strong[0] if strong else None
-        weak_name = w["name"]
-        strong_name = strong_topic["name"] if strong_topic else ""
-        subtitle = f"Изучаем: {weak_name}"
-        if strong_name:
-            subtitle += f" + проверяем: {strong_name}"
+    for i, w in enumerate(weak[:5]):
+        m = w["mastery"]
+        # Адаптивность: чем хуже знает — тем длиннее урок
+        if m < 0.3:
+            duration = 10
+            subtitle = f"Подробное изучение: {w['name']}"
+        elif m < 0.6:
+            duration = 7
+            subtitle = f"Закрепляем: {w['name']}"
+        else:
+            duration = 5
+            subtitle = f"Углубляем: {w['name']}"
+
+        strong_topic = None
+        for s in strong:
+            if s["id"] != w["id"]:
+                strong_topic = s
+                break
 
         stubs.append({
             "id": f"ai_{w['id']}_{i}",
-            "title": f"Урок: {weak_name}",
+            "title": f"{w['name']}",
             "subtitle": subtitle,
-            "duration_min": 7,
+            "duration_min": duration,
             "xp_reward": 35,
-            "skill": weak_name,
+            "skill": w["name"],
             "order": i + 1,
             "completed": False,
-            "locked": False,
+            "locked": i > 0,  # Только первый разлочен
             "screen_count": 5,
             "generated": True,
             "weak_topic": w["id"],
             "strong_topic": strong_topic["id"] if strong_topic else w["id"],
+            "weak_mastery": m,
         })
 
     return stubs
@@ -268,9 +278,8 @@ def get_lesson_stubs(mastery: dict) -> list[dict]:
 
 async def generate_lesson(mastery: dict, weak_topic: str = None, strong_topic: str = None) -> dict | None:
     """
-    Генерирует полный урок через LLM.
-    - weak_topic: тема для обучения (лёгкое объяснение + лёгкий вопрос)
-    - strong_topic: тема для проверки (сложный вопрос)
+    Генерирует персональный урок через LLM.
+    Адаптирует количество объяснений и сложность вопросов по mastery.
     """
     if not OPENROUTER_API_KEY:
         return None
@@ -282,7 +291,6 @@ async def generate_lesson(mastery: dict, weak_topic: str = None, strong_topic: s
     if not strong_topic and analysis["strong"]:
         strong_topic = analysis["strong"][0]["id"]
 
-    # Fallback
     if not weak_topic:
         weak_topic = "stocks"
     if not strong_topic:
@@ -290,22 +298,46 @@ async def generate_lesson(mastery: dict, weak_topic: str = None, strong_topic: s
 
     weak_name = TOPIC_NAMES.get(weak_topic, weak_topic)
     strong_name = TOPIC_NAMES.get(strong_topic, strong_topic)
-    weak_mastery = mastery.get(weak_topic, {}).get("mastery", 0.0)
-    strong_mastery = mastery.get(strong_topic, {}).get("mastery", 0.5)
+    weak_m = mastery.get(weak_topic, {}).get("mastery", 0.0)
+    strong_m = mastery.get(strong_topic, {}).get("mastery", 0.5)
 
-    mastery_summary = "Знания пользователя:\n"
+    # Адаптивная структура урока
+    if weak_m < 0.3:
+        # Совсем не понимает — много объяснений, лёгкие вопросы
+        structure = f"""Структура урока (пользователь СОВСЕМ НЕ ПОНИМАЕТ тему "{weak_name}"):
+1. 3 текстовых экрана — объясни "{weak_name}" с нуля, очень просто, как ребёнку, с примерами из жизни
+2. 2 лёгких вопроса по "{weak_name}" (базовые определения, понятия)
+3. 1 итоговый текстовый экран"""
+    elif weak_m < 0.6:
+        # Понимает базу — меньше теории, средние вопросы
+        structure = f"""Структура урока (пользователь ЧАСТИЧНО понимает "{weak_name}"):
+1. 2 текстовых экрана — углуби знания по "{weak_name}", дай практические примеры и ситуации
+2. 2 вопроса по "{weak_name}" (средней сложности — применение знаний)
+3. 1 итоговый текстовый экран"""
+    else:
+        # Хорошо понимает — минимум теории, сложные вопросы
+        structure = f"""Структура урока (пользователь ХОРОШО понимает "{weak_name}"):
+1. 1 текстовый экран — продвинутые нюансы "{weak_name}"
+2. 2 сложных вопроса по "{weak_name}" (расчёты, анализ, нестандартные ситуации)
+3. 1 сложный вопрос по "{strong_name}" (тоже продвинутый)
+4. 1 итоговый текстовый экран"""
+
+    # Если есть сильная тема отличная от слабой — добавляем проверочный вопрос
+    if strong_topic != weak_topic and weak_m < 0.6:
+        structure += f"""
+5. Дополнительно: 1 сложный вопрос по сильной теме "{strong_name}" (mastery {int(strong_m*100)}%)"""
+
+    mastery_summary = "Текущие знания пользователя:\n"
     for t_id, t_data in mastery.items():
         name = TOPIC_NAMES.get(t_id, t_id)
         m = t_data.get("mastery", 0.0)
-        level = "слабо" if m < 0.3 else "средне" if m < 0.6 else "хорошо" if m < 0.8 else "отлично"
-        mastery_summary += f"- {name}: {int(m*100)}% ({level})\n"
+        mastery_summary += f"- {name}: {int(m*100)}%\n"
 
     user_prompt = f"""{mastery_summary}
 
-Слабая тема для обучения: "{weak_name}" (mastery {int(weak_mastery*100)}%) — объясни просто, с примерами из жизни.
-Сильная тема для проверки: "{strong_name}" (mastery {int(strong_mastery*100)}%) — дай сложный вопрос.
+{structure}
 
-Сгенерируй урок по этим данным."""
+Сгенерируй урок."""
 
     client = OpenAI(
         base_url="https://openrouter.ai/api/v1",
@@ -318,12 +350,11 @@ async def generate_lesson(mastery: dict, weak_topic: str = None, strong_topic: s
             {"role": "system", "content": LESSON_SYSTEM_PROMPT},
             {"role": "user", "content": user_prompt},
         ],
-        max_tokens=2000,
+        max_tokens=2500,
     )
 
     response_text = response.choices[0].message.content.strip()
 
-    # Парсим JSON
     try:
         if response_text.startswith("```"):
             response_text = response_text.split("\n", 1)[1]
@@ -335,13 +366,15 @@ async def generate_lesson(mastery: dict, weak_topic: str = None, strong_topic: s
     if "screens" not in data or not isinstance(data["screens"], list):
         return None
 
-    # Валидация экранов
     valid_screens = []
     for screen in data["screens"]:
         if screen.get("type") == "text" and screen.get("content"):
             valid_screens.append(screen)
         elif screen.get("type") == "quiz" and all(k in screen for k in ("question", "options", "correct_index")):
             if len(screen["options"]) == 4 and isinstance(screen["correct_index"], int):
+                # Добавляем topic если не указан
+                if "topic" not in screen:
+                    screen["topic"] = weak_topic
                 valid_screens.append(screen)
 
     if len(valid_screens) < 3:
@@ -353,8 +386,8 @@ async def generate_lesson(mastery: dict, weak_topic: str = None, strong_topic: s
         "id": lesson_id,
         "module_id": "m_ai",
         "title": data.get("title", f"Урок: {weak_name}"),
-        "subtitle": f"Изучаем {weak_name}, проверяем {strong_name}",
-        "duration_min": 7,
+        "subtitle": f"Изучаем {weak_name}",
+        "duration_min": 7 if weak_m < 0.3 else 5,
         "xp_reward": 35,
         "skill": weak_name,
         "skill_topic": weak_topic,
