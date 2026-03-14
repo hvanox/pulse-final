@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { getLessonDetail, completeLesson, trade, getAdaptiveLessonQuestions, recordAdaptiveAnswer } from "../api"
+import { getLessonDetail, completeLesson, trade, getAdaptiveLessonQuestions, getAdaptiveRecommendation, recordAdaptiveAnswer } from "../api"
 
 export default function LessonScreen({ lessonId, onComplete, onBack }) {
   const [lesson, setLesson] = useState(null)
@@ -18,15 +18,30 @@ export default function LessonScreen({ lessonId, onComplete, onBack }) {
   useEffect(() => {
     setLoading(true)
     getLessonDetail(lessonId).then(async (l) => {
-      // Load adaptive questions from ML for this lesson's skill/topic
-      const topic = l.skill_topic || l.skill?.toLowerCase() || "stocks"
+      const mainTopic = l.skill_topic || l.skill?.toLowerCase() || "stocks"
       try {
-        const aq = await getAdaptiveLessonQuestions(topic, 2)
-        if (aq.ok && aq.questions?.length > 0) {
-          // Insert ML-adaptive quiz screens before the last screen
-          const adaptiveScreens = aq.questions.map((q, i) => ({
+        // Load questions for main topic + get recommendation for weak topic
+        const [aqMain, rec] = await Promise.all([
+          getAdaptiveLessonQuestions(mainTopic, 1),
+          getAdaptiveRecommendation(),
+        ])
+        const allAdaptive = []
+        // 1 question from main topic
+        if (aqMain.ok && aqMain.questions?.length > 0) {
+          allAdaptive.push(...aqMain.questions)
+        }
+        // 1 question from weakest topic (if different)
+        const weakTopic = rec?.recommendation?.topic_focus
+        if (weakTopic && weakTopic !== mainTopic) {
+          try {
+            const aqWeak = await getAdaptiveLessonQuestions(weakTopic, 1)
+            if (aqWeak.ok && aqWeak.questions?.length > 0) allAdaptive.push(...aqWeak.questions)
+          } catch {}
+        }
+        if (allAdaptive.length > 0) {
+          const adaptiveScreens = allAdaptive.map(q => ({
             type: "adaptive_quiz",
-            title: `📊 Адаптивный вопрос (${aq.meta?.mastery >= 0.7 ? "продвинутый" : aq.meta?.mastery >= 0.4 ? "средний" : "базовый"})`,
+            title: `🧠 Адаптивный вопрос`,
             question: q.question,
             options: q.options.map(o => typeof o === "string" ? o : o.text),
             correct_index: q.correct_index,
@@ -78,11 +93,13 @@ export default function LessonScreen({ lessonId, onComplete, onBack }) {
 
   const handleReveal = () => {
     setRevealed(true)
-    if (screen.type === "quiz") {
+    if (screen.type === "quiz" || screen.type === "decision") {
       setTotalQuiz(t => t + 1)
-      if (selected === screen.correct_index) {
-        setCorrectCount(c => c + 1)
-      }
+      const isCorrect = selected === screen.correct_index
+      if (isCorrect) setCorrectCount(c => c + 1)
+      // Record to ML engine
+      const topic = lesson.skill_topic || "stocks"
+      recordAdaptiveAnswer(topic, `lesson_${lessonId}_${screenIdx}`, isCorrect, 0, "lesson").catch(() => {})
     }
   }
 
