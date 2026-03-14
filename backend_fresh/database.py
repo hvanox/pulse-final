@@ -201,6 +201,7 @@ def init_db():
             weak_topic TEXT NOT NULL,
             strong_topic TEXT NOT NULL,
             lesson_json TEXT NOT NULL,
+            mastery_snapshot TEXT,
             created_at TEXT DEFAULT (datetime('now')),
             UNIQUE(user_id, weak_topic)
         );

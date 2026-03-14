@@ -20,7 +20,7 @@ from adaptive_questions import get_adaptive_question, get_questions_for_lesson, 
 from llm_generator import (
     generate_question, generate_lesson, select_topic_and_difficulty,
     get_recent_questions, get_lesson_stubs, analyze_mastery,
-    save_lesson_cache, get_cached_lesson, clear_lesson_cache,
+    save_lesson_cache, get_cached_lesson, clear_lesson_cache, invalidate_stale_cache,
 )
 import asyncio
 import threading
@@ -474,9 +474,11 @@ def _pregenerate_lessons_bg(user_id: str):
     try:
         db = get_db()
         mastery = ml_engine.compute_mastery_from_db(db, user_id)
+        # Удаляем только устаревшие (mastery изменился)
+        invalidate_stale_cache(db, user_id, mastery)
         stubs = get_lesson_stubs(mastery)
         for stub in stubs[:3]:
-            cached = get_cached_lesson(db, user_id, stub["weak_topic"])
+            cached = get_cached_lesson(db, user_id, stub["weak_topic"], mastery)
             if not cached:
                 loop = asyncio.new_event_loop()
                 lesson = loop.run_until_complete(
@@ -484,7 +486,7 @@ def _pregenerate_lessons_bg(user_id: str):
                 )
                 loop.close()
                 if lesson:
-                    save_lesson_cache(db, user_id, stub["weak_topic"], stub["strong_topic"], lesson)
+                    save_lesson_cache(db, user_id, stub["weak_topic"], stub["strong_topic"], lesson, mastery)
         db.close()
     except Exception:
         pass
@@ -502,23 +504,24 @@ async def v2_generate_lesson(
     db = get_db()
     mastery = ml_engine.compute_mastery_from_db(db, user_id)
 
-    # 1. Пробуем кэш
+    # 1. Пробуем кэш (урок хранится, пока mastery не изменится)
     if weakTopic:
-        cached = get_cached_lesson(db, user_id, weakTopic)
+        cached = get_cached_lesson(db, user_id, weakTopic, mastery)
         if cached:
-            # Удаляем использованный кэш
-            clear_lesson_cache(db, user_id, weakTopic)
             db.close()
-            # Предгенерируем следующие в фоне
-            threading.Thread(target=_pregenerate_lessons_bg, args=(user_id,), daemon=True).start()
             return {**cached, "completed": False}
 
     db.close()
 
-    # 2. Нет кэша — генерируем на лету
+    # 2. Нет кэша — генерируем на лету и сохраняем
     lesson = await generate_lesson(mastery, weakTopic, strongTopic)
     if not lesson:
         raise HTTPException(status_code=500, detail="lesson_generation_failed")
+
+    # Сохраняем в кэш
+    db2 = get_db()
+    save_lesson_cache(db2, user_id, weakTopic or lesson.get("weak_topic", "stocks"), strongTopic or lesson.get("strong_topic", "stocks"), lesson, mastery)
+    db2.close()
 
     # Предгенерируем остальные в фоне
     threading.Thread(target=_pregenerate_lessons_bg, args=(user_id,), daemon=True).start()
@@ -566,11 +569,9 @@ def v2_complete_lesson(body: CompleteLessonBody, current_user: str = Depends(get
     streak = update_streak(db, user_id)
     complete_daily_mission(db, user_id, "complete_lesson")
     unlock_achievement(db, user_id, "first_step")
-    # Очистить кэш — mastery изменился, нужны новые уроки
-    clear_lesson_cache(db, user_id)
     db.commit()
     db.close()
-    # Предгенерировать новые уроки с обновлённым mastery
+    # Инвалидируем устаревшие + предгенерируем новые в фоне
     threading.Thread(target=_pregenerate_lessons_bg, args=(user_id,), daemon=True).start()
     return {"ok": True, "xp_earned": xp_reward, "streak": streak}
 

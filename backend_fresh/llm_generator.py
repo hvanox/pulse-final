@@ -456,29 +456,64 @@ def build_hybrid_lesson(mastery: dict, weak_topic: str, strong_topic: str, stati
 
 # ─── Кэширование уроков ───
 
-def save_lesson_cache(db, user_id: str, weak_topic: str, strong_topic: str, lesson: dict):
+def _mastery_key(mastery: dict, topic: str) -> str:
+    """Создаёт ключ mastery для темы (чтобы понять изменилось ли)."""
+    m = mastery.get(topic, {}).get("mastery", 0.0)
+    answers = mastery.get(topic, {}).get("answers", 0)
+    return f"{m:.2f}_{answers}"
+
+
+def save_lesson_cache(db, user_id: str, weak_topic: str, strong_topic: str, lesson: dict, mastery: dict = None):
     """Сохраняет сгенерированный урок в кэш."""
     import json as _json
+    snap = _mastery_key(mastery, weak_topic) if mastery else ""
     db.execute(
-        "INSERT OR REPLACE INTO lesson_cache (user_id, weak_topic, strong_topic, lesson_json) VALUES (?,?,?,?)",
-        (user_id, weak_topic, strong_topic, _json.dumps(lesson, ensure_ascii=False)),
+        "INSERT OR REPLACE INTO lesson_cache (user_id, weak_topic, strong_topic, lesson_json, mastery_snapshot) VALUES (?,?,?,?,?)",
+        (user_id, weak_topic, strong_topic, _json.dumps(lesson, ensure_ascii=False), snap),
     )
     db.commit()
 
 
-def get_cached_lesson(db, user_id: str, weak_topic: str) -> dict | None:
-    """Достаёт урок из кэша."""
+def get_cached_lesson(db, user_id: str, weak_topic: str, mastery: dict = None) -> dict | None:
+    """
+    Достаёт урок из кэша.
+    Если mastery изменился — кэш невалиден, возвращает None.
+    """
     import json as _json
     row = db.execute(
-        "SELECT lesson_json FROM lesson_cache WHERE user_id=? AND weak_topic=?",
+        "SELECT lesson_json, mastery_snapshot FROM lesson_cache WHERE user_id=? AND weak_topic=?",
         (user_id, weak_topic),
     ).fetchone()
-    if row:
-        try:
-            return _json.loads(row["lesson_json"])
-        except (ValueError, TypeError):
+    if not row:
+        return None
+
+    # Проверяем: mastery изменился?
+    if mastery:
+        current_snap = _mastery_key(mastery, weak_topic)
+        saved_snap = row["mastery_snapshot"] or ""
+        if saved_snap and current_snap != saved_snap:
+            # Mastery изменился — кэш устарел
             return None
-    return None
+
+    try:
+        return _json.loads(row["lesson_json"])
+    except (ValueError, TypeError):
+        return None
+
+
+def invalidate_stale_cache(db, user_id: str, mastery: dict):
+    """Удаляет только устаревшие уроки (mastery изменился)."""
+    rows = db.execute(
+        "SELECT weak_topic, mastery_snapshot FROM lesson_cache WHERE user_id=?",
+        (user_id,),
+    ).fetchall()
+    for row in rows:
+        topic = row["weak_topic"]
+        saved = row["mastery_snapshot"] or ""
+        current = _mastery_key(mastery, topic)
+        if saved and current != saved:
+            db.execute("DELETE FROM lesson_cache WHERE user_id=? AND weak_topic=?", (user_id, topic))
+    db.commit()
 
 
 def clear_lesson_cache(db, user_id: str, weak_topic: str = None):
