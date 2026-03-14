@@ -139,6 +139,12 @@ input[type="range"]::-moz-range-thumb {
   animation: pulse-glow-anim 2s ease-in-out infinite;
 }
 
+/* Remove focus outline on buttons */
+button:focus, button:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
 /* Button hover effects */
 button:hover:not(:disabled) {
   filter: brightness(0.97);

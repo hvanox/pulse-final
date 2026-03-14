@@ -441,7 +441,7 @@ const s = {
     color: "#1a1a1a", fontSize: 14, cursor: "pointer",
     textAlign: "left", fontFamily: "inherit",
     display: "flex", alignItems: "center", gap: 12,
-    transition: "all 0.2s",
+    transition: "all 0.2s", outline: "none", boxShadow: "none",
   },
   optionDimmed: {
     opacity: 0.5, borderColor: "rgba(0,0,0,0.06)",
