@@ -194,6 +194,16 @@ def init_db():
             updated_at TEXT DEFAULT (datetime('now')),
             PRIMARY KEY (user_id, topic)
         );
+
+        CREATE TABLE IF NOT EXISTS lesson_cache (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id TEXT NOT NULL,
+            weak_topic TEXT NOT NULL,
+            strong_topic TEXT NOT NULL,
+            lesson_json TEXT NOT NULL,
+            created_at TEXT DEFAULT (datetime('now')),
+            UNIQUE(user_id, weak_topic)
+        );
         """
     )
     seed_onboarding_questions(conn)

@@ -17,7 +17,13 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from ml.adaptive_engine import get_default_engine
 from adaptive_questions import get_adaptive_question, get_questions_for_lesson, ADAPTIVE_QUESTIONS
-from llm_generator import generate_question, generate_lesson, select_topic_and_difficulty, get_recent_questions, get_lesson_stubs, analyze_mastery
+from llm_generator import (
+    generate_question, generate_lesson, select_topic_and_difficulty,
+    get_recent_questions, get_lesson_stubs, analyze_mastery,
+    save_lesson_cache, get_cached_lesson, clear_lesson_cache,
+)
+import asyncio
+import threading
 from cards import CARDS
 from database import START_BALANCE, get_db, init_db
 from lessons_v2 import LESSONS, LESSON_MAP, MODULE_MAP, MODULES, get_lesson, get_module_lessons
@@ -450,12 +456,38 @@ def v2_modules(userId: Optional[str] = Query(default=None), current_user: str = 
 
 @app.get("/v2/lessons")
 def v2_lessons(moduleId: str, userId: Optional[str] = Query(default=None), current_user: str = Depends(get_current_user)):
-    """Уроки генерируются на основе mastery — слабые темы первые, сложность адаптивная."""
+    """Уроки генерируются на основе mastery. Запускает предгенерацию в фоне."""
     user_id = resolve_user_id(userId, current_user)
     db = get_db()
     mastery = ml_engine.compute_mastery_from_db(db, user_id)
     db.close()
-    return get_lesson_stubs(mastery)
+    stubs = get_lesson_stubs(mastery)
+
+    # Запускаем предгенерацию в фоне — к моменту клика урок будет готов
+    threading.Thread(target=_pregenerate_lessons_bg, args=(user_id,), daemon=True).start()
+
+    return stubs
+
+
+def _pregenerate_lessons_bg(user_id: str):
+    """Фоновая предгенерация уроков для пользователя."""
+    try:
+        db = get_db()
+        mastery = ml_engine.compute_mastery_from_db(db, user_id)
+        stubs = get_lesson_stubs(mastery)
+        for stub in stubs[:3]:
+            cached = get_cached_lesson(db, user_id, stub["weak_topic"])
+            if not cached:
+                loop = asyncio.new_event_loop()
+                lesson = loop.run_until_complete(
+                    generate_lesson(mastery, stub["weak_topic"], stub["strong_topic"])
+                )
+                loop.close()
+                if lesson:
+                    save_lesson_cache(db, user_id, stub["weak_topic"], stub["strong_topic"], lesson)
+        db.close()
+    except Exception:
+        pass
 
 
 @app.get("/v2/generate-lesson")
@@ -465,14 +497,32 @@ async def v2_generate_lesson(
     userId: Optional[str] = Query(default=None),
     current_user: str = Depends(get_current_user),
 ):
-    """Генерирует персональный урок через LLM на основе mastery пользователя."""
+    """Отдаёт урок из кэша или генерирует на лету."""
     user_id = resolve_user_id(userId, current_user)
     db = get_db()
     mastery = ml_engine.compute_mastery_from_db(db, user_id)
+
+    # 1. Пробуем кэш
+    if weakTopic:
+        cached = get_cached_lesson(db, user_id, weakTopic)
+        if cached:
+            # Удаляем использованный кэш
+            clear_lesson_cache(db, user_id, weakTopic)
+            db.close()
+            # Предгенерируем следующие в фоне
+            threading.Thread(target=_pregenerate_lessons_bg, args=(user_id,), daemon=True).start()
+            return {**cached, "completed": False}
+
     db.close()
+
+    # 2. Нет кэша — генерируем на лету
     lesson = await generate_lesson(mastery, weakTopic, strongTopic)
     if not lesson:
         raise HTTPException(status_code=500, detail="lesson_generation_failed")
+
+    # Предгенерируем остальные в фоне
+    threading.Thread(target=_pregenerate_lessons_bg, args=(user_id,), daemon=True).start()
+
     return {**lesson, "completed": False}
 
 
@@ -516,8 +566,12 @@ def v2_complete_lesson(body: CompleteLessonBody, current_user: str = Depends(get
     streak = update_streak(db, user_id)
     complete_daily_mission(db, user_id, "complete_lesson")
     unlock_achievement(db, user_id, "first_step")
+    # Очистить кэш — mastery изменился, нужны новые уроки
+    clear_lesson_cache(db, user_id)
     db.commit()
     db.close()
+    # Предгенерировать новые уроки с обновлённым mastery
+    threading.Thread(target=_pregenerate_lessons_bg, args=(user_id,), daemon=True).start()
     return {"ok": True, "xp_earned": xp_reward, "streak": streak}
 
 
@@ -580,25 +634,26 @@ def dashboard(userId: Optional[str] = Query(default=None), current_user: str = D
     ach_count = db.execute("SELECT COUNT(*) AS cnt FROM user_achievements WHERE user_id=?", (user_id,)).fetchone()["cnt"]
     completed_ids = {r["lesson_id"] for r in db.execute("SELECT lesson_id FROM lesson_completions WHERE user_id=?", (user_id,)).fetchall()}
 
-    # Next lesson
+    # Next lesson — AI-урок на основе mastery
+    mastery = ml_engine.compute_mastery_from_db(db, user_id)
+    ai_stubs = get_lesson_stubs(mastery)
     next_lesson_data = None
-    for module in MODULES:
-        if user_level < module["required_level"]:
-            continue
-        for lesson in get_module_lessons(module["id"]):
-            if lesson["id"] not in completed_ids:
-                next_lesson_data = {
-                    "id": lesson["id"],
-                    "title": lesson["title"],
-                    "subtitle": lesson["subtitle"],
-                    "duration_min": lesson["duration_min"],
-                    "xp_reward": lesson["xp_reward"],
-                    "module_title": module["title"],
-                    "module_icon": module["icon"],
-                }
-                break
-        if next_lesson_data:
-            break
+    if ai_stubs:
+        stub = ai_stubs[0]
+        next_lesson_data = {
+            "id": stub["id"],
+            "title": stub["title"],
+            "subtitle": stub["subtitle"],
+            "duration_min": stub["duration_min"],
+            "xp_reward": stub["xp_reward"],
+            "module_title": "Твоё обучение",
+            "module_icon": "🧠",
+            "generated": True,
+            "weak_topic": stub["weak_topic"],
+            "strong_topic": stub["strong_topic"],
+        }
+        # Предгенерация в фоне
+        threading.Thread(target=_pregenerate_lessons_bg, args=(user_id,), daemon=True).start()
 
     # Daily missions
     today = date.today().isoformat()

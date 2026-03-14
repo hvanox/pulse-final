@@ -404,3 +404,87 @@ async def generate_lesson(mastery: dict, weak_topic: str = None, strong_topic: s
         "weak_topic": weak_topic,
         "strong_topic": strong_topic,
     }
+
+
+# ─── Комбинирование статических + AI вопросов ───
+
+def build_hybrid_lesson(mastery: dict, weak_topic: str, strong_topic: str, static_questions: list) -> dict | None:
+    """
+    Строит урок из статических вопросов + AI-генерации.
+    Статика: лёгкие/средние вопросы по теме (если есть).
+    AI: сложные вопросы и объяснения (если нужны).
+    Возвращает None если нужна полная AI-генерация.
+    """
+    weak_m = mastery.get(weak_topic, {}).get("mastery", 0.0)
+
+    # Ищем подходящие статические вопросы
+    if weak_m < 0.3:
+        target_diff = [1]
+    elif weak_m < 0.6:
+        target_diff = [1, 2]
+    else:
+        target_diff = [2, 3]
+
+    matching = [q for q in static_questions if q["topic"] == weak_topic and q["difficulty"] in target_diff]
+
+    if not matching:
+        return None  # Нет статических → полная AI-генерация
+
+    # Есть статические вопросы — комбинируем
+    quiz_screens = []
+    for q in matching[:2]:
+        quiz_screens.append({
+            "type": "quiz",
+            "title": "Проверим знания",
+            "question": q["question"],
+            "options": q["options"],
+            "correct_index": q["correct_index"],
+            "explanation": q.get("explanation", ""),
+            "topic": q["topic"],
+        })
+
+    # Проверяем: нужен ли AI-вопрос (сложный, которого нет в статике)
+    hard_static = [q for q in static_questions if q["topic"] == weak_topic and q["difficulty"] == 3]
+    needs_ai = weak_m >= 0.5 and not hard_static
+
+    return {
+        "static_screens": quiz_screens,
+        "needs_ai_explanation": weak_m < 0.3,  # Нужны AI-объяснения
+        "needs_ai_hard_question": needs_ai,      # Нужен AI-сложный вопрос
+    }
+
+
+# ─── Кэширование уроков ───
+
+def save_lesson_cache(db, user_id: str, weak_topic: str, strong_topic: str, lesson: dict):
+    """Сохраняет сгенерированный урок в кэш."""
+    import json as _json
+    db.execute(
+        "INSERT OR REPLACE INTO lesson_cache (user_id, weak_topic, strong_topic, lesson_json) VALUES (?,?,?,?)",
+        (user_id, weak_topic, strong_topic, _json.dumps(lesson, ensure_ascii=False)),
+    )
+    db.commit()
+
+
+def get_cached_lesson(db, user_id: str, weak_topic: str) -> dict | None:
+    """Достаёт урок из кэша."""
+    import json as _json
+    row = db.execute(
+        "SELECT lesson_json FROM lesson_cache WHERE user_id=? AND weak_topic=?",
+        (user_id, weak_topic),
+    ).fetchone()
+    if row:
+        try:
+            return _json.loads(row["lesson_json"])
+        except (ValueError, TypeError):
+            return None
+    return None
+
+
+def clear_lesson_cache(db, user_id: str, weak_topic: str = None):
+    """Удаляет кэш уроков (все или по теме)."""
+    if weak_topic:
+        db.execute("DELETE FROM lesson_cache WHERE user_id=? AND weak_topic=?", (user_id, weak_topic))
+    else:
+        db.execute("DELETE FROM lesson_cache WHERE user_id=?", (user_id,))
+    db.commit()

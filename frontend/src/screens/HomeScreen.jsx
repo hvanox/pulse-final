@@ -21,14 +21,14 @@ export default function HomeScreen({ onStartLesson, onNavigate }) {
           <div>
             <div style={s.portfolioLabel}>ПОРТФЕЛЬ</div>
             <div style={s.portfolioValue}>
-              {(portfolio?.total_value || 0).toLocaleString("ru-RU", { maximumFractionDigits: 0 })} ₽
+              {(portfolio?.total_value || 0).toLocaleString("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₽
             </div>
             <div style={{
               ...s.portfolioPnl,
               color: (portfolio?.total_pnl || 0) >= 0 ? "#21a038" : "#f44336"
             }}>
               {(portfolio?.total_pnl || 0) >= 0 ? "+" : ""}
-              {(portfolio?.total_pnl || 0).toLocaleString("ru-RU", { maximumFractionDigits: 0 })} ₽
+              {(portfolio?.total_pnl || 0).toLocaleString("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₽
               {" "}({(portfolio?.total_pnl_pct || 0) >= 0 ? "+" : ""}{(portfolio?.total_pnl_pct || 0).toFixed(2)}%)
             </div>
           </div>
@@ -49,7 +49,7 @@ export default function HomeScreen({ onStartLesson, onNavigate }) {
                 <span>⏱ ~{next_lesson.duration_min} мин</span>
                 <span>+{next_lesson.xp_reward} XP</span>
               </div>
-              <button style={s.startBtn} onClick={() => onStartLesson(next_lesson.id)}>
+              <button style={s.startBtn} onClick={() => onStartLesson(next_lesson.id, next_lesson.generated ? next_lesson : null)}>
                 Начать →
               </button>
             </>
