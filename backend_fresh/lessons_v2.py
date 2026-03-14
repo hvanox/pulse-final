@@ -14,6 +14,7 @@ LESSONS = [
         "duration_min": 8,
         "xp_reward": 30,
         "skill": "Основы",
+        "skill_topic": "stocks",
         "order": 1,
         "screens": [
             {
@@ -61,6 +62,7 @@ LESSONS = [
         "duration_min": 10,
         "xp_reward": 40,
         "skill": "Акции",
+        "skill_topic": "stocks",
         "order": 1,
         "screens": [
             {
@@ -109,6 +111,7 @@ LESSONS = [
         "duration_min": 12,
         "xp_reward": 50,
         "skill": "Риски",
+        "skill_topic": "risk",
         "order": 1,
         "screens": [
             {

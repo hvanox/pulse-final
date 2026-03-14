@@ -10,6 +10,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, EmailStr, Field
 
+import sys
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+from ml.adaptive_engine import get_default_engine
+from adaptive_questions import get_adaptive_question, get_questions_for_lesson, ADAPTIVE_QUESTIONS
 from cards import CARDS
 from database import START_BALANCE, get_db, init_db
 from lessons_v2 import LESSONS, LESSON_MAP, MODULE_MAP, MODULES, get_lesson, get_module_lessons
@@ -54,6 +58,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+# ML Adaptive Engine (singleton)
+ml_engine = get_default_engine()
 
 @app.on_event("startup")
 def startup():
@@ -768,20 +775,27 @@ def onboarding_result(userId: Optional[str] = Query(default=None), current_user:
 def adaptive_mastery(userId: Optional[str] = Query(default=None), current_user: str = Depends(get_current_user)):
     user_id = resolve_user_id(userId, current_user)
     db = get_db()
-    mastery = compute_topic_mastery(db, user_id)
+    mastery = ml_engine.compute_mastery_from_db(db, user_id)
     db.close()
-    return {"mastery": mastery, "weak_topics": get_weak_topics(mastery), "strong_topics": get_strong_topics(mastery)}
+    weak = [{"id": k, "mastery": v["mastery"], "trend": v["recent_trend"]} for k, v in mastery.items() if v["mastery"] < 0.5]
+    strong = [{"id": k, "mastery": v["mastery"], "trend": v["recent_trend"]} for k, v in mastery.items() if v["mastery"] >= 0.7 and v["answers"] >= 3]
+    weak.sort(key=lambda x: x["mastery"])
+    strong.sort(key=lambda x: x["mastery"], reverse=True)
+    return {"mastery": mastery, "weak_topics": weak, "strong_topics": strong}
 
 
 @app.get("/adaptive/recommendation")
 def adaptive_recommendation(userId: Optional[str] = Query(default=None), current_user: str = Depends(get_current_user)):
     user_id = resolve_user_id(userId, current_user)
     db = get_db()
-    mastery = compute_topic_mastery(db, user_id)
-    rec = recommend_next_content(db, user_id, mastery)
-    due = get_topics_due_for_review(db, user_id, mastery)
+    mastery = ml_engine.compute_mastery_from_db(db, user_id)
+    priorities = ml_engine.get_topic_priorities(mastery)
+    review = ml_engine.get_review_schedule(db, user_id, mastery)
     db.close()
-    return {"recommendation": rec, "review_due": due[:3]}
+    # Focus on highest priority topic
+    focus = priorities[0] if priorities else None
+    rec = {"type": "lesson", "topic_focus": focus["topic"] if focus else None, "reason": focus.get("reason", "") if focus else "Продолжай текущий модуль", "priority_list": priorities[:5]}
+    return {"recommendation": rec, "review_due": review[:5]}
 
 
 class AdaptiveAnswerBody(BaseModel):
@@ -803,15 +817,72 @@ def adaptive_answer(body: AdaptiveAnswerBody, current_user: str = Depends(get_cu
         "INSERT INTO adaptive_answers (user_id, topic, question_id, is_correct, time_ms, source) VALUES (?,?,?,?,?,?)",
         (user_id, body.topic, body.questionId, int(body.isCorrect), int(body.timeMs), body.source),
     )
-    mastery = compute_topic_mastery(db, user_id)
-    topic_data = mastery.get(body.topic, {"mastery": 0.0, "answers": 0})
+    # BKT mastery update
+    mastery_all = ml_engine.compute_mastery_from_db(db, user_id)
+    topic_data = mastery_all.get(body.topic, {"mastery": 0.0, "answers": 0})
     db.execute(
         "INSERT OR REPLACE INTO topic_mastery (user_id, topic, mastery, answers, updated_at) VALUES (?,?,?,?,datetime('now'))",
         (user_id, body.topic, float(topic_data["mastery"]), int(topic_data["answers"])),
     )
     db.commit()
     db.close()
-    return {"ok": True, "mastery": topic_data["mastery"]}
+    return {"ok": True, "mastery": topic_data["mastery"], "trend": topic_data.get("recent_trend", "unknown")}
+
+
+@app.get("/adaptive/next-question")
+def adaptive_next_question(
+    topic: str = Query(...),
+    userId: Optional[str] = Query(default=None),
+    current_user: str = Depends(get_current_user),
+):
+    """ML-powered: подбирает вопрос по теме на основе mastery пользователя."""
+    user_id = resolve_user_id(userId, current_user)
+    db = get_db()
+    mastery_all = ml_engine.compute_mastery_from_db(db, user_id)
+    topic_mastery = mastery_all.get(topic, {"mastery": 0.1, "answers": 0})
+    # ML engine выбирает оптимальную сложность
+    optimal_diff = ml_engine.get_next_optimal_difficulty(topic, topic_mastery["mastery"])
+    # Исключаем недавние вопросы
+    recent = db.execute(
+        "SELECT question_id FROM adaptive_answers WHERE user_id=? AND topic=? ORDER BY created_at DESC LIMIT 10",
+        (user_id, topic),
+    ).fetchall()
+    db.close()
+    exclude = [r["question_id"] for r in recent]
+    q = get_adaptive_question(user_id, topic, optimal_diff, exclude)
+    if not q:
+        return {"ok": False, "error": "no_questions_available"}
+    return {
+        "ok": True,
+        "question": {**q, "options": [{"text": o} for o in q["options"]]},
+        "meta": {"mastery": topic_mastery["mastery"], "optimal_difficulty": optimal_diff, "trend": topic_mastery.get("recent_trend", "unknown")},
+    }
+
+
+@app.get("/adaptive/lesson-questions")
+def adaptive_lesson_questions(
+    topic: str = Query(...),
+    count: int = Query(default=3),
+    userId: Optional[str] = Query(default=None),
+    current_user: str = Depends(get_current_user),
+):
+    """ML-powered: подбирает набор вопросов для урока, адаптированных по сложности."""
+    user_id = resolve_user_id(userId, current_user)
+    db = get_db()
+    mastery_all = ml_engine.compute_mastery_from_db(db, user_id)
+    topic_mastery = mastery_all.get(topic, {"mastery": 0.1})["mastery"]
+    recent = db.execute(
+        "SELECT question_id FROM adaptive_answers WHERE user_id=? AND topic=? ORDER BY created_at DESC LIMIT 20",
+        (user_id, topic),
+    ).fetchall()
+    db.close()
+    exclude = [r["question_id"] for r in recent]
+    questions = get_questions_for_lesson(user_id, topic, topic_mastery, count, exclude)
+    return {
+        "ok": True,
+        "questions": [{**q, "options": [{"text": o} for o in q["options"]]} for q in questions],
+        "meta": {"topic": topic, "mastery": topic_mastery, "count": len(questions)},
+    }
 
 
 @app.get("/ml/features/{userId}")

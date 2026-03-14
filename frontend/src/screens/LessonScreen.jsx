@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { getLessonDetail, completeLesson, trade } from "../api"
+import { getLessonDetail, completeLesson, trade, getAdaptiveLessonQuestions, recordAdaptiveAnswer } from "../api"
 
 export default function LessonScreen({ lessonId, onComplete, onBack }) {
   const [lesson, setLesson] = useState(null)
@@ -17,9 +17,32 @@ export default function LessonScreen({ lessonId, onComplete, onBack }) {
 
   useEffect(() => {
     setLoading(true)
-    getLessonDetail(lessonId)
-      .then(l => { setLesson(l); setLoading(false) })
-      .catch(() => setLoading(false))
+    getLessonDetail(lessonId).then(async (l) => {
+      // Load adaptive questions from ML for this lesson's skill/topic
+      const topic = l.skill_topic || l.skill?.toLowerCase() || "stocks"
+      try {
+        const aq = await getAdaptiveLessonQuestions(topic, 2)
+        if (aq.ok && aq.questions?.length > 0) {
+          // Insert ML-adaptive quiz screens before the last screen
+          const adaptiveScreens = aq.questions.map((q, i) => ({
+            type: "adaptive_quiz",
+            title: `📊 Адаптивный вопрос (${aq.meta?.mastery >= 0.7 ? "продвинутый" : aq.meta?.mastery >= 0.4 ? "средний" : "базовый"})`,
+            question: q.question,
+            options: q.options.map(o => typeof o === "string" ? o : o.text),
+            correct_index: q.correct_index,
+            explanation: q.explanation,
+            adaptive_id: q.id,
+            topic: q.topic,
+          }))
+          const screens = [...(l.screens || [])]
+          const insertAt = Math.max(screens.length - 1, 1)
+          screens.splice(insertAt, 0, ...adaptiveScreens)
+          l = { ...l, screens }
+        }
+      } catch {}
+      setLesson(l)
+      setLoading(false)
+    }).catch(() => setLoading(false))
   }, [lessonId])
 
   if (loading || !lesson) {
@@ -168,6 +191,23 @@ export default function LessonScreen({ lessonId, onComplete, onBack }) {
         {screen.type === "text" && (
           <TextScreen screen={screen} onNext={nextScreen} isLast={isLast} />
         )}
+        {screen.type === "adaptive_quiz" && (
+          <AdaptiveQuizScreen
+            screen={screen}
+            selected={selected}
+            revealed={revealed}
+            onSelect={handleOptionSelect}
+            onReveal={() => {
+              setRevealed(true)
+              setTotalQuiz(t => t + 1)
+              const isCorrect = selected === screen.correct_index
+              if (isCorrect) setCorrectCount(c => c + 1)
+              // Record to ML engine
+              recordAdaptiveAnswer(screen.topic, screen.adaptive_id, isCorrect, Date.now() - (performance.now()), "lesson").catch(() => {})
+            }}
+            onNext={nextScreen}
+          />
+        )}
         {screen.type === "result" && (
           <ResultScreen
             screen={screen}
@@ -183,6 +223,44 @@ export default function LessonScreen({ lessonId, onComplete, onBack }) {
 }
 
 // ─── Screen Components ───
+
+function AdaptiveQuizScreen({ screen, selected, revealed, onSelect, onReveal, onNext }) {
+  return (
+    <div style={s.screenInner}>
+      <div style={s.adaptiveBadge}>🧠 Подобран под твой уровень</div>
+      <div style={s.visualTitle}>{screen.question}</div>
+      <div style={s.optionsGrid}>
+        {screen.options.map((opt, i) => {
+          const text = typeof opt === "string" ? opt : opt.text
+          const isCorrect = revealed && i === screen.correct_index
+          const isWrong = revealed && i === selected && i !== screen.correct_index
+          return (
+            <button key={i} onClick={() => !revealed && onSelect(i)} disabled={revealed} style={{
+              ...s.optionCard,
+              ...(selected === i && !revealed ? { borderColor: "#ffdd2d", background: "rgba(255,221,45,0.1)" } : {}),
+              ...(isCorrect ? { borderColor: "#21a038", background: "rgba(33,160,56,0.08)" } : {}),
+              ...(isWrong ? { borderColor: "#f44336", background: "rgba(244,67,54,0.08)" } : {}),
+            }}>
+              <span style={{ ...s.optLetter, ...(isCorrect ? { background: "#21a038", color: "#fff" } : {}), ...(isWrong ? { background: "#f44336", color: "#fff" } : {}) }}>
+                {String.fromCharCode(65 + i)}
+              </span>
+              <span>{text}</span>
+            </button>
+          )
+        })}
+      </div>
+      {revealed && screen.explanation && (
+        <div style={s.tipBox}>💡 {screen.explanation}</div>
+      )}
+      {!revealed && selected !== null && (
+        <button style={s.primaryBtn} onClick={onReveal}>Проверить</button>
+      )}
+      {revealed && (
+        <button style={s.primaryBtn} onClick={onNext}>Далее →</button>
+      )}
+    </div>
+  )
+}
 
 function TextScreen({ screen, onNext, isLast }) {
   return (
@@ -668,6 +746,25 @@ const s = {
   highlight: {
     padding: "8px 16px", background: "rgba(255,221,45,0.1)", borderRadius: 8,
     color: "#ffdd2d", fontSize: 14, fontWeight: 700, textAlign: "center",
+  },
+  adaptiveBadge: {
+    display: "inline-block", padding: "4px 12px", background: "rgba(255,221,45,0.15)",
+    borderRadius: 20, color: "#8b6914", fontSize: 11, fontWeight: 700, letterSpacing: 1,
+    marginBottom: 12,
+  },
+  optionsGrid: {
+    display: "flex", flexDirection: "column", gap: 8, marginBottom: 16,
+  },
+  optionCard: {
+    display: "flex", alignItems: "center", gap: 12, padding: "14px 16px",
+    border: "1px solid rgba(0,0,0,0.1)", borderRadius: 12, background: "#fff",
+    cursor: "pointer", fontSize: 14, textAlign: "left", fontFamily: "inherit",
+    color: "#1a1a1a", transition: "all 0.2s",
+  },
+  optLetter: {
+    width: 28, height: 28, borderRadius: "50%", background: "rgba(0,0,0,0.05)",
+    display: "flex", alignItems: "center", justifyContent: "center",
+    fontSize: 12, fontWeight: 700, flexShrink: 0,
   },
   tipBox: {
     padding: "12px 16px", background: "rgba(255,221,45,0.12)", borderRadius: 10,

@@ -98,9 +98,11 @@ export const getOnboardingStatus = () => apiFetch(`${BASE}/onboarding/status?use
 export const submitOnboarding = (answers) => apiFetch(`${BASE}/onboarding/submit`, POST_JSON({ userId: USER_ID, answers }))
 export const getOnboardingResult = () => apiFetch(`${BASE}/onboarding/result?userId=${USER_ID}`)
 
-// ─── Adaptive Learning ───
+// ─── Adaptive Learning (ML-powered) ───
 export const getAdaptiveMastery = () => apiFetch(`${BASE}/adaptive/mastery?userId=${USER_ID}`)
 export const getAdaptiveRecommendation = () => apiFetch(`${BASE}/adaptive/recommendation?userId=${USER_ID}`)
+export const getAdaptiveNextQuestion = (topic) => apiFetch(`${BASE}/adaptive/next-question?topic=${topic}&userId=${USER_ID}`)
+export const getAdaptiveLessonQuestions = (topic, count = 3) => apiFetch(`${BASE}/adaptive/lesson-questions?topic=${topic}&count=${count}&userId=${USER_ID}`)
 export const recordAdaptiveAnswer = (topic, questionId, isCorrect, timeMs = 0, source = "lesson") => apiFetch(`${BASE}/adaptive/answer`, POST_JSON({ userId: USER_ID, topic, questionId, isCorrect, timeMs, source }))
 
 // ─── Legacy ───
