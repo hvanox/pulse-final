@@ -427,78 +427,35 @@ def market_event_action(body: EventActionBody, current_user: str = Depends(get_c
 
 @app.get("/v2/modules")
 def v2_modules(userId: Optional[str] = Query(default=None), current_user: str = Depends(get_current_user)):
+    """Все уроки генерируются ЛЛМ на основе mastery пользователя."""
     user_id = resolve_user_id(userId, current_user)
     db = get_db()
-    prog = db.execute("SELECT level FROM progress WHERE user_id=?", (user_id,)).fetchone()
-    user_level = int(prog["level"] if prog else 1)
-    completed = {r["lesson_id"] for r in db.execute("SELECT lesson_id FROM lesson_completions WHERE user_id=?", (user_id,)).fetchall()}
-
-    out = []
-    for module in MODULES:
-        lessons = get_module_lessons(module["id"])
-        done = sum(1 for l in lessons if l["id"] in completed)
-        total = len(lessons)
-        out.append(
-            {
-                **module,
-                "completed_count": done,
-                "total_lessons": total,
-                "progress_pct": round(done / total * 100) if total else 0,
-                "locked": user_level < module["required_level"],
-            }
-        )
-
-    # AI-модуль — персональное обучение
     mastery = ml_engine.compute_mastery_from_db(db, user_id)
     db.close()
     ai_stubs = get_lesson_stubs(mastery)
-    out.append({
+
+    # Один модуль — всё обучение персональное
+    return [{
         "id": "m_ai",
-        "title": "Персональное обучение",
-        "icon": "🤖",
+        "title": "Твоё обучение",
+        "icon": "🧠",
         "required_level": 1,
         "completed_count": 0,
         "total_lessons": len(ai_stubs),
         "progress_pct": 0,
         "locked": False,
         "generated": True,
-    })
-
-    return out
+    }]
 
 
 @app.get("/v2/lessons")
 def v2_lessons(moduleId: str, userId: Optional[str] = Query(default=None), current_user: str = Depends(get_current_user)):
+    """Уроки генерируются на основе mastery — слабые темы первые, сложность адаптивная."""
     user_id = resolve_user_id(userId, current_user)
     db = get_db()
-    completed = {r["lesson_id"] for r in db.execute("SELECT lesson_id FROM lesson_completions WHERE user_id=?", (user_id,)).fetchall()}
-
-    # AI-модуль — уроки генерируются на основе mastery
-    if moduleId == "m_ai":
-        mastery = ml_engine.compute_mastery_from_db(db, user_id)
-        db.close()
-        return get_lesson_stubs(mastery)
-
+    mastery = ml_engine.compute_mastery_from_db(db, user_id)
     db.close()
-    lessons = get_module_lessons(moduleId)
-    out = []
-    for idx, lesson in enumerate(lessons):
-        locked = idx > 0 and lessons[idx - 1]["id"] not in completed
-        out.append(
-            {
-                "id": lesson["id"],
-                "title": lesson["title"],
-                "subtitle": lesson["subtitle"],
-                "duration_min": lesson["duration_min"],
-                "xp_reward": lesson["xp_reward"],
-                "skill": lesson["skill"],
-                "order": lesson["order"],
-                "completed": lesson["id"] in completed,
-                "locked": locked,
-                "screen_count": len(lesson["screens"]),
-            }
-        )
-    return out
+    return get_lesson_stubs(mastery)
 
 
 @app.get("/v2/generate-lesson")

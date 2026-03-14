@@ -1,91 +1,50 @@
 import { useState, useEffect } from "react"
-import { getModules, getModuleLessons } from "../api"
+import { getModuleLessons } from "../api"
 
 export default function LearnScreen({ onStartLesson }) {
-  const [modules, setModules] = useState([])
-  const [expandedModule, setExpandedModule] = useState(null)
-  const [lessons, setLessons] = useState({})
+  const [lessons, setLessons] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const loadMods = () => { setLoading(true); setError(null); getModules().then(m => { setModules(m); setLoading(false) }).catch(e => { setError(e.message||"Ошибка"); setLoading(false) }) }
-  useEffect(() => { loadMods() }, [])
 
-  const toggleModule = async (moduleId) => {
-    if (expandedModule === moduleId) { setExpandedModule(null); return }
-    setExpandedModule(moduleId)
-    if (!lessons[moduleId]) {
-      try { const data = await getModuleLessons(moduleId); setLessons(prev => ({ ...prev, [moduleId]: data })) } catch {}
-    }
+  const loadLessons = () => {
+    setLoading(true)
+    setError(null)
+    getModuleLessons("m_ai")
+      .then(data => { setLessons(data); setLoading(false) })
+      .catch(e => { setError(e.message || "Ошибка"); setLoading(false) })
   }
 
-  if (loading) return <div style={s.loading}>Загрузка...</div>
-  if (error) return <div style={s.loading}><div style={{fontSize:48,marginBottom:16}}>⚠️</div><div style={{marginBottom:16}}>{error}</div><button onClick={loadMods} style={{padding:"10px 24px",borderRadius:10,border:"1px solid rgba(0,0,0,0.1)",background:"transparent",color:"#ffdd2d",cursor:"pointer",fontFamily:"inherit"}}>Повторить</button></div>
+  useEffect(() => { loadLessons() }, [])
+
+  if (loading) return <div style={s.loading}>Загрузка уроков...</div>
+  if (error) return <div style={s.loading}><div style={{fontSize:48,marginBottom:16}}>⚠️</div><div style={{marginBottom:16}}>{error}</div><button onClick={loadLessons} style={{padding:"10px 24px",borderRadius:10,border:"1px solid rgba(0,0,0,0.1)",background:"transparent",color:"#ffdd2d",cursor:"pointer",fontFamily:"inherit"}}>Повторить</button></div>
 
   return (
     <div style={s.page}>
       <div style={s.pageTitle}>Обучение</div>
-      <div style={s.subtitle}>6 модулей · 25 уроков · от основ до стратегий</div>
+      <div style={s.subtitle}>Уроки подобраны под тебя на основе твоих результатов</div>
 
-      <div style={s.modulesList}>
-        {modules.map((m, idx) => (
-          <div key={m.id} style={s.moduleCard}>
+      <div style={s.lessonsList}>
+        {lessons.map((lesson, li) => (
+          <div key={lesson.id} style={{
+            ...s.lessonRow,
+            opacity: lesson.locked ? 0.4 : 1,
+            cursor: lesson.locked ? "default" : "pointer",
+          }} onClick={() => !lesson.locked && onStartLesson(lesson.id, lesson)}>
             <div style={{
-              ...s.moduleHeader,
-              opacity: m.locked ? 0.5 : 1,
-              cursor: m.locked ? "default" : "pointer",
-            }} onClick={() => !m.locked && toggleModule(m.id)}>
-              <div style={s.moduleNum}>{idx + 1}</div>
-              <div style={s.moduleIcon}>{m.locked ? "🔒" : m.icon}</div>
-              <div style={s.moduleInfo}>
-                <div style={s.moduleTitle}>{m.title}</div>
-                <div style={s.moduleDesc}>{m.description}</div>
-                <div style={s.moduleProgress}>
-                  <div style={s.progressBar}>
-                    <div style={{ ...s.progressFill, width: `${m.progress_pct}%` }} />
-                  </div>
-                  <span style={s.progressText}>
-                    {m.completed_count}/{m.total_lessons} уроков
-                  </span>
-                </div>
-              </div>
-              <div style={s.moduleArrow}>
-                {m.locked ? "" : expandedModule === m.id ? "▲" : "▼"}
-              </div>
+              ...s.lessonDot,
+              background: lesson.locked ? "rgba(0,0,0,0.06)" : "#9c27b0",
+            }}>
+              {lesson.locked ? "🔒" : li + 1}
             </div>
-
-            {/* Expanded lessons */}
-            {expandedModule === m.id && lessons[m.id] && (
-              <div style={s.lessonsList}>
-                {lessons[m.id].map((lesson, li) => (
-                  <div key={lesson.id} style={{
-                    ...s.lessonRow,
-                    opacity: lesson.locked ? 0.4 : 1,
-                    cursor: lesson.locked ? "default" : "pointer",
-                  }} onClick={() => !lesson.locked && onStartLesson(lesson.id, lesson.generated ? lesson : null)}>
-                    <div style={{
-                      ...s.lessonDot,
-                      background: lesson.completed ? "#21a038" : lesson.locked ? "rgba(0,0,0,0.06)" : lesson.generated ? "#9c27b0" : "#ffdd2d",
-                    }}>
-                      {lesson.completed ? "✓" : lesson.locked ? "🔒" : lesson.generated ? "🤖" : li + 1}
-                    </div>
-                    <div style={s.lessonInfo}>
-                      <div style={s.lessonTitle}>{lesson.title}</div>
-                      <div style={s.lessonSub}>{lesson.subtitle}</div>
-                    </div>
-                    <div style={s.lessonMeta}>
-                      <span>⏱ {lesson.duration_min} мин</span>
-                      <span style={{ color: "#ffdd2d" }}>+{lesson.xp_reward} XP</span>
-                    </div>
-                    {lesson.generated && (
-                      <span style={s.completedBadge}>🤖</span>
-                    )}
-                    {lesson.completed && (
-                      <span style={s.completedBadge}>✅</span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
+            <div style={s.lessonInfo}>
+              <div style={s.lessonTitle}>{lesson.title}</div>
+              <div style={s.lessonSub}>{lesson.subtitle}</div>
+            </div>
+            <div style={s.lessonMeta}>
+              <span>⏱ {lesson.duration_min} мин</span>
+              <span style={{ color: "#ffdd2d" }}>+{lesson.xp_reward} XP</span>
+            </div>
           </div>
         ))}
       </div>
@@ -98,57 +57,24 @@ const s = {
   loading: { color: "rgba(0,0,0,0.45)", padding: 40, textAlign: "center" },
   pageTitle: { fontSize: 28, fontWeight: 800, color: "#1a1a1a", marginBottom: 4 },
   subtitle: { fontSize: 14, color: "rgba(0,0,0,0.4)", marginBottom: 24 },
-  modulesList: { display: "flex", flexDirection: "column", gap: 12 },
-  moduleCard: {
-    background: "#ffffff", borderRadius: 16,
-    border: "1px solid rgba(0,0,0,0.08)", overflow: "hidden",
-    boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
-  },
-  moduleHeader: {
-    display: "flex", alignItems: "center", gap: 14,
-    padding: "18px 20px",
-  },
-  moduleNum: {
-    width: 28, height: 28, borderRadius: "50%",
-    background: "rgba(0,0,0,0.08)", color: "rgba(0,0,0,0.3)",
-    display: "flex", alignItems: "center", justifyContent: "center",
-    fontSize: 13, fontWeight: 700, flexShrink: 0,
-  },
-  moduleIcon: { fontSize: 24, flexShrink: 0 },
-  moduleInfo: { flex: 1 },
-  moduleTitle: { fontSize: 16, fontWeight: 700, color: "#1a1a1a", marginBottom: 2 },
-  moduleDesc: { fontSize: 12, color: "rgba(0,0,0,0.4)", marginBottom: 8 },
-  moduleProgress: { display: "flex", alignItems: "center", gap: 10 },
-  progressBar: {
-    flex: 1, height: 5, background: "rgba(0,0,0,0.06)",
-    borderRadius: 3, overflow: "hidden",
-  },
-  progressFill: {
-    height: "100%", background: "linear-gradient(90deg, #ffdd2d, #FFA000)",
-    borderRadius: 3, transition: "width 0.4s",
-  },
-  progressText: { fontSize: 11, color: "rgba(0,0,0,0.4)", flexShrink: 0 },
-  moduleArrow: { fontSize: 12, color: "rgba(0,0,0,0.3)", flexShrink: 0 },
-  lessonsList: {
-    borderTop: "1px solid rgba(0,0,0,0.04)",
-    padding: "8px 12px 12px",
-  },
+  lessonsList: { display: "flex", flexDirection: "column", gap: 8 },
   lessonRow: {
     display: "flex", alignItems: "center", gap: 12,
-    padding: "12px 14px", borderRadius: 10,
+    padding: "16px 18px", borderRadius: 14,
+    background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)",
+    boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
     transition: "background 0.2s",
   },
   lessonDot: {
-    width: 28, height: 28, borderRadius: "50%",
+    width: 32, height: 32, borderRadius: "50%",
     display: "flex", alignItems: "center", justifyContent: "center",
-    fontSize: 12, fontWeight: 700, color: "#000", flexShrink: 0,
+    fontSize: 13, fontWeight: 700, color: "#fff", flexShrink: 0,
   },
   lessonInfo: { flex: 1 },
-  lessonTitle: { fontSize: 14, fontWeight: 600, color: "#1a1a1a" },
+  lessonTitle: { fontSize: 15, fontWeight: 600, color: "#1a1a1a" },
   lessonSub: { fontSize: 12, color: "rgba(0,0,0,0.4)" },
   lessonMeta: {
     display: "flex", flexDirection: "column", alignItems: "flex-end",
     gap: 2, fontSize: 11, color: "rgba(0,0,0,0.4)",
   },
-  completedBadge: { fontSize: 16, marginLeft: 4 },
 }
