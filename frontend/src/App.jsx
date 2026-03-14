@@ -149,7 +149,7 @@ export default function App() {
             onNavigate={handleNavigate}
           />
         )}
-        {screen === "portfolio" && <PortfolioScreen />}
+        {screen === "portfolio" && <PortfolioScreen onRefresh={() => setRefreshKey(k => k + 1)} />}
         {screen === "learn" && <LearnScreen onStartLesson={handleStartLesson} />}
         {screen === "lesson" && (
           <LessonScreen

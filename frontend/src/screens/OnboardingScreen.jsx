@@ -447,8 +447,8 @@ const s = {
     opacity: 0.5, borderColor: "rgba(0,0,0,0.06)",
   },
   optionSelected: {
-    borderColor: "#ffdd2d", borderWidth: 2, background: "rgba(255,221,45,0.1)",
-    boxShadow: "0 0 0 1px #ffdd2d",
+    borderColor: "#ffdd2d", background: "rgba(255,221,45,0.1)",
+    boxShadow: "0 0 0 2px #ffdd2d",
   },
   optionRevealed: {
     borderColor: "rgba(0,0,0,0.12)", opacity: 0.7,

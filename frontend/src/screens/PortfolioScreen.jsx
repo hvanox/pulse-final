@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 import { getPortfolio, getStocks, trade, getTransactions } from "../api"
 
-export default function PortfolioScreen() {
+export default function PortfolioScreen({ onRefresh }) {
   const [portfolio, setPortfolio] = useState(null)
   const [stocks, setStocks] = useState([])
   const [transactions, setTransactions] = useState([])
@@ -31,7 +31,7 @@ export default function PortfolioScreen() {
           const msg = tradeAction === "buy"
             ? `Куплено ${tradeShares} акций ${selectedStock.name} за ${res.total?.toLocaleString("ru-RU")} ₽`
             : `Продано ${tradeShares} акций ${selectedStock.name} за ${res.total?.toLocaleString("ru-RU")} ₽`
-          setTradeMsg({ type: "success", text: msg }); setSelectedStock(null); setTradeShares(1); refresh()
+          setTradeMsg({ type: "success", text: msg }); setSelectedStock(null); setTradeShares(1); refresh(); onRefresh?.()
         } else { setTradeMsg({ type: "error", text: res.error }) }
       })
       .catch(e => setTradeMsg({ type: "error", text: e.message||"Ошибка сделки" }))
