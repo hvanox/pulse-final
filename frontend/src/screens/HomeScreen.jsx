@@ -1,322 +1,223 @@
 import { useState, useEffect } from "react"
-import { getLessons } from "../api"
+import { getDashboard, marketEventAction, checkPortfolio } from "../api"
 
-const TOPIC_ICONS = {
-  "акции": "📈",
-  "облигации": "📄",
-  "бюджет": "💰",
-  "налоги": "🏛️",
-}
-
-const TOPIC_COLORS = {
-  "акции": { bg: "#e3f2fd", border: "#90caf9", fill: "#1565c0" },
-  "облигации": { bg: "#f3e5f5", border: "#ce93d8", fill: "#7b1fa2" },
-  "бюджет": { bg: "#e8f5e9", border: "#a5d6a7", fill: "#2e7d32" },
-  "налоги": { bg: "#fff3e0", border: "#ffcc80", fill: "#e65100" },
-}
-
-const DIFFICULTY_LABELS = {
-  1: "Легко",
-  2: "Средне",
-  3: "Сложно",
-}
-
-function formatCountdown(targetIso) {
-  const diff = new Date(targetIso) - new Date()
-  if (diff <= 0) return null
-  const h = Math.floor(diff / 3600000)
-  const m = Math.floor((diff % 3600000) / 60000)
-  const s = Math.floor((diff % 60000) / 1000)
-  return `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`
-}
-
-export default function HomeScreen({ onSelectLesson }) {
-  const [lessons, setLessons] = useState([])
+export default function HomeScreen({ onStartLesson, onNavigate }) {
+  const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [, setTick] = useState(0)
 
   useEffect(() => {
-    getLessons().then(data => {
-      setLessons(data)
-      setLoading(false)
-    })
+    setLoading(true)
+    getDashboard()
+      .then(d => { setData(d); setLoading(false) })
+      .catch(() => setLoading(false))
+    checkPortfolio().catch(() => {})
   }, [])
 
-  // Timer tick every second for countdown
-  useEffect(() => {
-    const hasTimer = lessons.some(l => l.unlock_at)
-    if (!hasTimer) return
-    const interval = setInterval(() => setTick(t => t + 1), 1000)
-    return () => clearInterval(interval)
-  }, [lessons])
-
-  if (loading) {
-    return (
-      <div style={s.page}>
-        <div style={s.header}>
-          <h1 style={s.title}>Сегодняшний путь</h1>
-          <p style={s.subtitle}>Загрузка...</p>
-        </div>
-        <div style={s.path}>
-          {[1, 2, 3, 4].map(i => (
-            <div key={i} style={s.skeletonCircle} />
-          ))}
-        </div>
-      </div>
-    )
+  if (loading || !data) {
+    return <div style={s.loading}>Загрузка...</div>
   }
+
+  const { portfolio, next_lesson, daily_missions, market_event, module_progress, stats } = data
 
   return (
     <div style={s.page}>
-      <div style={s.header}>
-        <h1 style={s.title}>Сегодняшний путь</h1>
-        <p style={s.subtitle}>Пройди все уроки от простого к сложному</p>
+      {/* Portfolio Widget */}
+      <div style={s.portfolioCard} onClick={() => onNavigate("portfolio")}>
+        <div style={s.portfolioHeader}>
+          <div>
+            <div style={s.portfolioLabel}>ПОРТФЕЛЬ</div>
+            <div style={s.portfolioValue}>
+              {(portfolio?.total_value || 0).toLocaleString("ru-RU", { maximumFractionDigits: 0 })} ₽
+            </div>
+            <div style={{
+              ...s.portfolioPnl,
+              color: (portfolio?.total_pnl || 0) >= 0 ? "#4caf50" : "#ef5350"
+            }}>
+              {(portfolio?.total_pnl || 0) >= 0 ? "+" : ""}
+              {(portfolio?.total_pnl || 0).toLocaleString("ru-RU", { maximumFractionDigits: 0 })} ₽
+              {" "}({(portfolio?.total_pnl_pct || 0) >= 0 ? "+" : ""}{(portfolio?.total_pnl_pct || 0).toFixed(2)}%)
+            </div>
+          </div>
+          <div style={{ opacity: 0.7, fontSize: 32 }}>📈</div>
+        </div>
       </div>
 
-      <div style={s.path}>
-        {lessons.map((lesson, index) => {
-          const colors = TOPIC_COLORS[lesson.topic] || TOPIC_COLORS["акции"]
-          const icon = TOPIC_ICONS[lesson.topic] || "📚"
-          const offsetX = index % 2 === 0 ? -50 : 50
-          const countdown = lesson.unlock_at ? formatCountdown(lesson.unlock_at) : null
-          const isTimeLocked = lesson.locked && countdown
+      {/* Next Lesson + Daily Missions */}
+      <div style={s.row}>
+        <div style={s.card}>
+          <div style={s.cardLabel}>СЛЕДУЮЩИЙ УРОК</div>
+          {next_lesson ? (
+            <>
+              <div style={s.lessonModule}>{next_lesson.module_icon} {next_lesson.module_title}</div>
+              <div style={s.lessonTitle}>{next_lesson.title}</div>
+              <div style={s.lessonSub}>{next_lesson.subtitle}</div>
+              <div style={s.lessonMeta}>
+                <span>⏱ ~{next_lesson.duration_min} мин</span>
+                <span>+{next_lesson.xp_reward} XP</span>
+              </div>
+              <button style={s.startBtn} onClick={() => onStartLesson(next_lesson.id)}>
+                Начать →
+              </button>
+            </>
+          ) : (
+            <div style={s.allDone}><span style={{ fontSize: 40 }}>🎉</span><div>Все уроки пройдены!</div></div>
+          )}
+        </div>
 
-          return (
-            <div key={lesson.id}>
-              {/* Difficulty section */}
-              {(index === 0 || lesson.difficulty !== lessons[index - 1]?.difficulty) && (
-                <div style={s.sectionHeader}>
-                  <div style={{
-                    ...s.sectionBadge,
-                    background: colors.bg,
-                    borderColor: colors.border,
-                  }}>
-                    <span style={s.sectionIcon}>
-                      {"⭐".repeat(lesson.difficulty)}
-                    </span>
-                    <span style={{ ...s.sectionText, color: colors.fill }}>
-                      {DIFFICULTY_LABELS[lesson.difficulty]}
-                    </span>
-                  </div>
+        <div style={s.card}>
+          <div style={s.cardLabel}>ЕЖЕДНЕВНЫЕ МИССИИ</div>
+          <div style={s.missionsList}>
+            {daily_missions?.map((m, i) => (
+              <div key={i} style={s.missionItem}>
+                <span style={{ fontSize: 16 }}>{m.completed ? "✅" : "⬜"}</span>
+                <span style={{
+                  flex: 1, fontSize: 13, color: "#e8eaed",
+                  textDecoration: m.completed ? "line-through" : "none",
+                  opacity: m.completed ? 0.5 : 1,
+                }}>
+                  {m.icon} {m.text}
+                </span>
+                <span style={{ fontSize: 11, color: "#FFD600", fontWeight: 600 }}>+{m.xp}</span>
+              </div>
+            ))}
+          </div>
+          {daily_missions?.every(m => m.completed) && (
+            <div style={s.bonusBanner}>🎁 Бонус: +50 XP</div>
+          )}
+        </div>
+      </div>
+
+      {/* Market Event */}
+      {market_event && !market_event.seen && (
+        <div style={s.eventCard}>
+          <div style={{ fontSize: 11, color: "#FFD600", fontWeight: 700, letterSpacing: 1, marginBottom: 8 }}>
+            📰 РЫНОЧНОЕ СОБЫТИЕ
+          </div>
+          <div style={{ fontSize: 18, fontWeight: 700, color: "#fff", marginBottom: 6 }}>
+            {market_event.headline}
+          </div>
+          <div style={{ fontSize: 13, color: "rgba(255,255,255,0.6)", marginBottom: 12, lineHeight: 1.5 }}>
+            {market_event.detail}
+          </div>
+          {Object.keys(market_event.affected_holdings || {}).length > 0 && (
+            <div style={{ marginBottom: 12 }}>
+              {Object.entries(market_event.affected_holdings).map(([ticker, info]) => (
+                <div key={ticker} style={{ display: "flex", gap: 12, fontSize: 14, padding: "4px 0", color: "#e8eaed" }}>
+                  <span>{info.name}</span>
+                  <span style={{ color: info.impact_pct >= 0 ? "#4caf50" : "#ef5350", fontWeight: 700 }}>
+                    {info.impact_pct >= 0 ? "+" : ""}{info.impact_pct}%
+                  </span>
+                  <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 12 }}>
+                    ({info.impact_amount >= 0 ? "+" : ""}{info.impact_amount?.toLocaleString("ru-RU")} ₽)
+                  </span>
                 </div>
-              )}
+              ))}
+            </div>
+          )}
+          <div style={{ display: "flex", gap: 8 }}>
+            {["Подробнее", "Продать?", "Держать"].map((label, i) => (
+              <button key={i} onClick={() => {
+                marketEventAction(market_event.id, ["details", "sell", "hold"][i])
+                  .then(() => setData(d => ({ ...d, market_event: { ...market_event, seen: true } })))
+              }} style={{
+                flex: 1, padding: "10px 0", border: "1px solid rgba(255,255,255,0.1)",
+                borderRadius: 8, background: "transparent", fontSize: 13, cursor: "pointer",
+                fontFamily: "inherit", transition: "all 0.2s",
+                color: i === 1 ? "#ef5350" : i === 2 ? "#4caf50" : "rgba(255,255,255,0.7)",
+                borderColor: i === 1 ? "rgba(239,83,80,0.3)" : i === 2 ? "rgba(76,175,80,0.3)" : "rgba(255,255,255,0.1)",
+              }}>{label}</button>
+            ))}
+          </div>
+        </div>
+      )}
 
-              {/* Connector */}
-              {index > 0 && (
-                <div style={s.connectorWrap}>
+      {/* Module Progress */}
+      <div style={s.card}>
+        <div style={s.cardLabel}>ПРОГРЕСС ОБУЧЕНИЯ</div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          {module_progress?.map(m => (
+            <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <span style={{ fontSize: 20, width: 28, textAlign: "center" }}>{m.locked ? "🔒" : m.icon}</span>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: "#e8eaed", marginBottom: 4 }}>{m.title}</div>
+                <div style={{ height: 6, background: "rgba(255,255,255,0.08)", borderRadius: 3, overflow: "hidden" }}>
                   <div style={{
-                    ...s.connector,
-                    borderColor: lesson.completed ? "#4caf50" : lesson.locked ? "#e0e0e0" : "#FFD600",
+                    height: "100%", width: `${m.progress_pct}%`,
+                    background: "linear-gradient(90deg, #FFD600, #FFA000)",
+                    borderRadius: 3, transition: "width 0.5s",
+                    opacity: m.locked ? 0.3 : 1,
                   }} />
                 </div>
-              )}
-
-              {/* Circle node */}
-              <div style={{ ...s.nodeWrap, transform: `translateX(${offsetX}px)` }}>
-                <button
-                  style={{
-                    ...s.circle,
-                    background: lesson.completed
-                      ? "#4caf50"
-                      : lesson.locked
-                        ? "#f5f5f5"
-                        : colors.bg,
-                    borderColor: lesson.completed
-                      ? "#388e3c"
-                      : lesson.locked
-                        ? "#e0e0e0"
-                        : colors.border,
-                    cursor: lesson.locked ? "not-allowed" : "pointer",
-                    opacity: lesson.locked ? 0.6 : 1,
-                    boxShadow: !lesson.locked && !lesson.completed
-                      ? `0 4px 20px ${colors.border}80`
-                      : lesson.completed
-                        ? "0 4px 12px rgba(76,175,80,0.3)"
-                        : "none",
-                  }}
-                  onClick={() => !lesson.locked && onSelectLesson(lesson)}
-                  disabled={lesson.locked}
-                  className={!lesson.locked && !lesson.completed ? "pulse-glow" : ""}
-                >
-                  {lesson.completed ? (
-                    <span style={s.checkmark}>✓</span>
-                  ) : lesson.locked ? (
-                    <span style={s.lockIcon}>🔒</span>
-                  ) : (
-                    <span style={s.circleIcon}>{icon}</span>
-                  )}
-                </button>
-
-                {/* Label */}
-                <div style={{ ...s.nodeLabel, color: lesson.locked ? "#bbb" : "#333" }}>
-                  Урок {lesson.id} · {lesson.topic}
-                </div>
-
-                {/* Question count */}
-                <div style={{ ...s.questionCount, color: lesson.locked ? "#ccc" : "#888" }}>
-                  {lesson.question_count} вопроса
-                </div>
-
-                {/* Timer for time-locked lessons */}
-                {isTimeLocked && (
-                  <div style={s.timerBadge}>
-                    <span style={s.timerIcon}>⏰</span>
-                    <span style={s.timerText}>{countdown || "Скоро..."}</span>
-                  </div>
-                )}
               </div>
+              <span style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", width: 36, textAlign: "right" }}>
+                {m.locked ? "" : `${m.progress_pct}%`}
+              </span>
             </div>
-          )
-        })}
-
-        {/* Finish */}
-        <div style={s.connectorWrap}>
-          <div style={{ ...s.connector, borderColor: "#e0e0e0" }} />
-        </div>
-        <div style={s.nodeWrap}>
-          <div style={s.finishCircle}>
-            <span style={{ fontSize: 32 }}>🏆</span>
-          </div>
-          <div style={s.nodeLabel}>Финиш</div>
+          ))}
         </div>
       </div>
 
-      <div style={{ height: 80 }} />
+      {/* Stats */}
+      <div style={s.statsRow}>
+        {[
+          { emoji: "🏅", num: stats?.lessons_completed || 0, label: "уроков" },
+          { emoji: "📊", num: stats?.trades_made || 0, label: "сделок" },
+          { emoji: "💰", num: `${(stats?.portfolio_return_pct || 0) >= 0 ? "+" : ""}${stats?.portfolio_return_pct || 0}%`, label: "доходность" },
+          { emoji: "🏆", num: stats?.achievements || 0, label: "достижений" },
+        ].map((st, i) => (
+          <div key={i} style={s.statCard}>
+            <div style={{ fontSize: 24, marginBottom: 4 }}>{st.emoji}</div>
+            <div style={{ fontSize: 20, fontWeight: 700, color: "#fff", marginBottom: 2 }}>{st.num}</div>
+            <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)" }}>{st.label}</div>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
 
 const s = {
-  page: {
-    padding: "32px 24px",
-    maxWidth: 500,
-    margin: "0 auto",
-    fontFamily: "Inter, sans-serif",
+  page: { maxWidth: 900, margin: "0 auto" },
+  loading: { color: "rgba(255,255,255,0.5)", padding: 40, textAlign: "center", fontSize: 16 },
+  portfolioCard: {
+    background: "linear-gradient(135deg, #1a2634, #1e3a5f)",
+    borderRadius: 16, padding: "24px 28px", marginBottom: 20,
+    cursor: "pointer", border: "1px solid rgba(255,255,255,0.06)",
   },
-  header: {
-    textAlign: "center",
-    marginBottom: 40,
+  portfolioHeader: { display: "flex", justifyContent: "space-between", alignItems: "center" },
+  portfolioLabel: { fontSize: 11, color: "rgba(255,255,255,0.4)", letterSpacing: 2, marginBottom: 8 },
+  portfolioValue: { fontSize: 32, fontWeight: 800, color: "#fff", marginBottom: 4 },
+  portfolioPnl: { fontSize: 15, fontWeight: 600 },
+  row: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 20 },
+  card: {
+    background: "#1a2634", borderRadius: 16, padding: "20px 24px",
+    border: "1px solid rgba(255,255,255,0.06)", marginBottom: 20,
   },
-  title: {
-    fontSize: 28,
-    fontWeight: 800,
-    color: "#1a1a1a",
-    margin: "0 0 8px",
+  cardLabel: { fontSize: 11, color: "rgba(255,255,255,0.4)", letterSpacing: 2, marginBottom: 12 },
+  lessonModule: { fontSize: 12, color: "rgba(255,255,255,0.5)", marginBottom: 6 },
+  lessonTitle: { fontSize: 18, fontWeight: 700, color: "#fff", marginBottom: 4 },
+  lessonSub: { fontSize: 13, color: "rgba(255,255,255,0.5)", marginBottom: 12 },
+  lessonMeta: { display: "flex", gap: 16, fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 16 },
+  startBtn: {
+    width: "100%", padding: "12px 0", border: "none", borderRadius: 10,
+    background: "#FFD600", color: "#000", fontSize: 15, fontWeight: 700,
+    cursor: "pointer", fontFamily: "inherit",
   },
-  subtitle: {
-    fontSize: 15,
-    color: "#888",
-    margin: 0,
+  allDone: { textAlign: "center", padding: "20px 0", color: "rgba(255,255,255,0.6)", fontSize: 14 },
+  missionsList: { display: "flex", flexDirection: "column", gap: 10 },
+  missionItem: { display: "flex", alignItems: "center", gap: 8 },
+  bonusBanner: {
+    marginTop: 12, padding: "8px 12px", background: "rgba(255,214,0,0.1)",
+    borderRadius: 8, color: "#FFD600", fontSize: 12, fontWeight: 600, textAlign: "center",
   },
-  path: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
+  eventCard: {
+    background: "linear-gradient(135deg, #1a2634, #2a1a34)",
+    borderRadius: 16, padding: "20px 24px", marginBottom: 20,
+    border: "1px solid rgba(255,255,255,0.08)",
   },
-  sectionHeader: {
-    marginBottom: 16,
-    marginTop: 8,
-  },
-  sectionBadge: {
-    display: "inline-flex",
-    alignItems: "center",
-    gap: 8,
-    padding: "8px 20px",
-    borderRadius: 20,
-    border: "2px solid",
-  },
-  sectionIcon: {
-    fontSize: 14,
-  },
-  sectionText: {
-    fontSize: 14,
-    fontWeight: 700,
-    textTransform: "uppercase",
-    letterSpacing: 1,
-  },
-  connectorWrap: {
-    display: "flex",
-    justifyContent: "center",
-    height: 32,
-  },
-  connector: {
-    width: 0,
-    height: "100%",
-    borderLeft: "3px dashed #e0e0e0",
-  },
-  nodeWrap: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    gap: 6,
-    transition: "transform 0.3s ease",
-  },
-  circle: {
-    width: 88,
-    height: 88,
-    borderRadius: "50%",
-    border: "4px solid",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    transition: "all 0.2s ease",
-    fontFamily: "Inter, sans-serif",
-  },
-  circleIcon: {
-    fontSize: 36,
-  },
-  checkmark: {
-    fontSize: 36,
-    color: "#fff",
-    fontWeight: 700,
-  },
-  lockIcon: {
-    fontSize: 28,
-  },
-  nodeLabel: {
-    fontSize: 14,
-    fontWeight: 600,
-    textTransform: "capitalize",
-  },
-  questionCount: {
-    fontSize: 12,
-    fontWeight: 500,
-  },
-  timerBadge: {
-    display: "flex",
-    alignItems: "center",
-    gap: 6,
-    padding: "6px 14px",
-    background: "#fff3e0",
-    borderRadius: 12,
-    border: "1px solid #ffe0b2",
-    marginTop: 4,
-  },
-  timerIcon: {
-    fontSize: 14,
-  },
-  timerText: {
-    fontSize: 13,
-    fontWeight: 700,
-    color: "#e65100",
-    fontVariantNumeric: "tabular-nums",
-  },
-  finishCircle: {
-    width: 88,
-    height: 88,
-    borderRadius: "50%",
-    background: "#f5f5f5",
-    border: "4px dashed #e0e0e0",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  skeletonCircle: {
-    width: 88,
-    height: 88,
-    borderRadius: "50%",
-    background: "#f0f0f0",
-    margin: "16px 0",
-    animation: "pulse 1.4s ease-in-out infinite",
+  statsRow: { display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 },
+  statCard: {
+    background: "#1a2634", borderRadius: 12, padding: "16px 12px",
+    textAlign: "center", border: "1px solid rgba(255,255,255,0.06)",
   },
 }

@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pulse — Пользовательские сценарии и цикл вовлечения</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .section {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            page-break-inside: avoid;
+        }
+        
+        .section h2 {
+            color: #667eea;
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+        }
+        
+        .section h3 {
+            color: #764ba2;
+            font-size: 1.3rem;
+            margin: 25px 0 15px;
+        }
+        
+        .mermaid {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .description {
+            background: #f0f4ff;
+            border-left: 4px solid #667eea;
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .description h4 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        
+        .description ul {
+            margin-left: 20px;
+        }
+        
+        .description li {
+            margin: 8px 0;
+            line-height: 1.6;
+        }
+        
+        .streak-info {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+        }
+        
+        .streak-info h4 {
+            font-size: 1.3rem;
+            margin-bottom: 10px;
+        }
+        
+        .roulette-info {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+            border: 3px dashed #fff;
+        }
+        
+        .roulette-info h4 {
+            font-size: 1.3rem;
+            margin-bottom: 10px;
+        }
+        
+        .future-feature {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        
+        .future-feature h4 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+        
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .metric-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+        }
+        
+        .metric-card .value {
+            font-size: 2rem;
+            font-weight: bold;
+            display: block;
+        }
+        
+        .metric-card .label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            
+            .section {
+                box-shadow: none;
+                border: 1px solid #ddd;
+                page-break-inside: avoid;
+            }
+            
+            .mermaid {
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 Pulse — Пользовательские сценарии</h1>
+            <p>Диаграммы вовлечения, стрики и система вознаграждений</p>
+        </div>
+
+        <!-- СЦЕНАРИЙ 1: Новый пользователь -->
+        <div class="section">
+            <h2>📱 Сценарий 1: Первый опыт нового пользователя</h2>
+            
+            <div class="description">
+                <h4>Контекст</h4>
+                <p>Пользователь впервые заходит на платформу, регистрируется и начинает обучение с первого урока.</p>
+            </div>
+
+            <div class="mermaid">
+flowchart TD
+    A[🏠 Лендинг / Главная] --> B[📝 Регистрация]
+    B --> C[✅ Подтверждение email]
+    C --> D[👤 Заполнение профиля]
+    D --> E[🎯 Карта уроков]
+    E --> F{Урок 1<br/>доступен}
+    F -->|Да| G[📚 Начало урока]
+    G --> H[❓ Вопрос 1/3]
+    H --> I{Правильно?}
+    I -->|Да| J[✅ +Объяснение]
+    I -->|Нет| K[❌ Попробовать ещё]
+    J --> L[❓ Вопрос 2/3]
+    K --> H
+    L --> M{Правильно?}
+    M -->|Да| N[✅ +Объяснение]
+    M -->|Нет| O[❌ Попробовать ещё]
+    N --> P[❓ Вопрос 3/3]
+    O --> L
+    P --> Q{Правильно?}
+    Q -->|Да| R[✅ +Объяснение]
+    Q -->|Нет| S[❌ Попробовать ещё]
+    R --> T[🎉 Урок пройден!]
+    S --> P
+    T --> U[📊 Обновление прогресса]
+    U --> V[🔥 streak = 1]
+    V --> W[⭐ Награда: 10 XP]
+    W --> X[🏆 Урок 2 разблокирован]
+    X --> Y[📍 Карта уроков]
+            </div>
+
+            <div class="description">
+                <h4>Ключевые точки вовлечения</h4>
+                <ul>
+                    <li><strong>Регистрация:</strong> Минимальные барьеры (email + пароль), мгновенный доступ</li>
+                    <li><strong>Первый урок:</strong> Всегда открыт, 3 вопроса, мгновенная обратная связь</li>
+                    <li><strong>Геймификация:</strong> Звёзды за правильные ответы, прогресс-бар</li>
+                    <li><strong>Награда:</strong> Первый стрик激活, разблокировка следующего урока</li>
+                </ul>
+            </div>
+
+            <div class="streak-info">
+                <h4>🔥 Система стриков (первый день)</h4>
+                <p>При первом прохождении урока пользователь активирует свой первый стрик. Счётчик дней отображается в сайдбаре рядом с иконкой огня.</p>
+            </div>
+        </div>
+
+        <!-- СЦЕНАРИЙ 2: Возвращающийся пользователь -->
+        <div class="section">
+            <h2>🔄 Сценарий 2: Возвращающийся пользователь (Day 2+)</h2>
+            
+            <div class="description">
+                <h4>Контекст</h4>
+                <p>Пользователь возвращается на следующий день для поддержания стрика и продолжения обучения.</p>
+            </div>
+
+            <div class="mermaid">
+flowchart TD
+    A[🔐 Вход в аккаунт] --> B[👋 Приветствие<br/>"С днём 3!"]
+    B --> C[🔥 Проверка стрика]
+    C --> D{< 24 часов<br/>с последнего урока?}
+    D -->|Да| E[⚠️ Урок ещё не доступен]
+    D -->|Нет| F[✅ Стрик активен]
+    E --> G[⏰ Таймер разблокировки]
+    F --> H[🎯 Карта уроков]
+    G --> H
+    H --> I{Какой урок<br/>выбрать?}
+    I -->|Разблокирован| J[📚 Прохождение урока]
+    I -->|Заблокирован| K[⏳ Ждать 24 часа]
+    J --> L[❓ 3 вопроса]
+    L --> M[✅ Завершение]
+    M --> N[📊 streak += 1]
+    N --> O[⭐ +10 XP]
+    O --> P[🎁 Daily Reward]
+    P --> Q{7 дней<br/>подряд?}
+    Q -->|Да| R[🎰 БОНУСНАЯ РУЛЕТКА!]
+    Q -->|Нет| S[🏆 Обычная награда]
+    R --> T[🎲 Крутить рулетку]
+    S --> U[📍 Карта уроков]
+    T --> V[🎁 Случайный приз]
+    V --> U
+            </div>
+
+            <div class="description">
+                <h4>Ключевые точки вовлечения</h4>
+                <ul>
+                    <li><strong>Приветствие:</strong> Персонализированное, с номером дня стрика</li>
+                    <li><strong>Проверка стрика:</strong> 24-часовой кулдаун между уроками для поддержания стрика</li>
+                    <li><strong>Визуальный прогресс:</strong> Карта с разблокированными/заблокированными уроками</li>
+                    <li><strong>Ежедневная награда:</strong> За каждый пройденный урок</li>
+                    <li><strong>Недельный бонус:</strong> После 7 дней подряд — доступ к рулетке</li>
+                </ul>
+            </div>
+
+            <div class="streak-info">
+                <h4>🔥 Система стриков (механика)</h4>
+                <ul>
+                    <li><strong>Активация:</strong> Первый пройденный урок = стрик день 1</li>
+                    <li><strong>Поддержание:</strong> Минимум 1 урок каждые 24 часа</li>
+                    <li><strong>Потеря:</strong> Пропуск 24 часов = сброс стрика в 0</li>
+                    <li><strong>Визуализация:</strong> Иконка 🔥 с числом в сайдбаре</li>
+                    <li><strong>Мотивация:</strong> Чем длиннее стрик, тем ценнее награды</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- ЦИКЛ ВОВЛЕЧЕНИЯ -->
+        <div class="section">
+            <h2>🔄 Цикл вовлечения пользователя</h2>
+            
+            <div class="description">
+                <h4>Описание цикла</h4>
+                <p>Полный цикл удержания пользователя: от первого визита до постоянного возвращения через систему вознаграждений.</p>
+            </div>
+
+            <div class="mermaid">
+flowchart LR
+    A[🎯 Первый визит] --> B[📝 Регистрация]
+    B --> C[📚 Первый урок]
+    C --> D[🔥 Стрик активирован]
+    D --> E[⭐ Получение XP]
+    E --> F[📊 Видимый прогресс]
+    F --> G{День 2+}
+    G -->|Возврат| H[🔥 Стрик += 1]
+    G -->|Пропуск| I[❌ Стрик сброшен]
+    H --> J[🎁 Daily Reward]
+    I --> C
+    J --> K{7 дней<br/>подряд?}
+    K -->|Да| L[🎰 БОНУС РУЛЕТКИ]
+    K -->|Нет| M[🏆 Обычная награда]
+    L --> N[🎲 Случайный приз<br/>XP / Бустеры / Скины]
+    M --> O[💎 Накопление XP]
+    N --> O
+    O --> P[📈 Уровень профиля]
+    P --> Q[🎯 Новые цели]
+    Q --> G
+    style L fill:#f5576c
+    style N fill:#4facfe
+            </div>
+
+            <div class="metrics">
+                <div class="metric-card">
+                    <span class="value">Day 1</span>
+                    <span class="label">Регистрация + Первый урок</span>
+                </div>
+                <div class="metric-card">
+                    <span class="value">Day 2-6</span>
+                    <span class="label">Ежедневные уроки + Стрик</span>
+                </div>
+                <div class="metric-card">
+                    <span class="value">Day 7</span>
+                    <span class="label">Бонусная рулетка</span>
+                </div>
+                <div class="metric-card">
+                    <span class="value">Day 30+</span>
+                    <span class="label">Постоянный пользователь</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- СИСТЕМА СТРИКОВ -->
+        <div class="section">
+            <h2>🔥 Детальная система стриков</h2>
+            
+            <div class="mermaid">
+flowchart TD
+    A[📅 Новый день] --> B{Пользователь<br/>зашёл на сайт?}
+    B -->|Да| C{Есть активный<br/>стрик?}
+    B -->|Нет| D[⏰ 24 часа прошли]
+    C -->|Да| E[🔥 Стрик сохранён]
+    C -->|Нет| F[🔥 Стрик = 1]
+    D --> G[❌ Стрик сброшен]
+    E --> H[📚 Прошёл урок?]
+    F --> H
+    G --> I[📍 Возврат к началу]
+    H -->|Да| J[⭐ +10 XP]
+    H -->|Нет| K[⚠️ Напоминание]
+    J --> L{День недели<br/>кратен 7?}
+    K --> M[📚 Прохождение урока]
+    M --> J
+    L -->|Да| N[🎰 ДОСТУП К РУЛЕТКЕ]
+    L -->|Нет| O[🏆 Стандартная награда]
+    N --> P[🎁 Бонусный приз]
+    O --> Q[📊 Обновление прогресса]
+    P --> Q
+    Q --> R[🔥 Отображение в UI]
+    R --> S[💪 Мотивация продолжать]
+            </div>
+
+            <div class="description">
+                <h4>Правила системы стриков</h4>
+                <ul>
+                    <li><strong>Активация:</strong> Первый пройденный урок в жизни аккаунта</li>
+                    <li><strong>Поддержание:</strong> Минимум 1 урок каждые 24 часа</li>
+                    <li><strong>Кулдаун:</strong> После урока — 24 часа до следующего "зачёта" для стрика</li>
+                    <li><strong>Сброс:</strong> Если прошло 24+ часа без урока — стрик обнуляется</li>
+                    <li><strong>Визуализация:</strong> 🔥 + число в сайдбаре (видно на всех экранах)</li>
+                    <li><strong>Напоминания:</strong> Push/email уведомления при риске потери стрика</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- СИСТЕМА РУЛЕТКИ -->
+        <div class="section">
+            <h2>🎰 Система рулетки (Future Feature)</h2>
+            
+            <div class="future-feature">
+                <h4>🚧 Будущая реализация</h4>
+                <p>Эта функция будет реализована в следующей итерации проекта. Ниже представлена полная схема работы.</p>
+            </div>
+
+            <div class="roulette-info">
+                <h4>🎁 Как работает рулетка</h4>
+                <p>Доступна после 7 дней стрика подряд. Пользователь получает возможность крутить рулетку и получать случайные призы.</p>
+            </div>
+
+            <div class="mermaid">
+flowchart TD
+    A[📅 День 7 стрика] --> B[🎰 Рулетка доступна]
+    B --> C[🔔 Уведомление пользователя]
+    C --> D[🎯 Кнопка "Крутить!"]
+    D --> E[🎲 Анимация вращения]
+    E --> F{Выпадение сектора}
+    
+    F -->|20%| G[💎 50 XP]
+    F -->|20%| H[💎 100 XP]
+    F -->|15%| I[🚀 2x XP буст<br/>на 1 час]
+    F -->|15%| J[🛡️ Заморозка стрика<br/>на 1 день]
+    F -->|10%| K[🎨 Редкий скин<br/>профиля]
+    F -->|10%| L[⚡ 3x XP буст<br/>на 30 мин]
+    F -->|5%| M[👑 Легендарный<br/>скин профиля]
+    F -->|5%| N[💰 500 XP<br/>ДЖЕКПОТ]
+    
+    G --> O[🎉 Показ приза]
+    H --> O
+    I --> O
+    J --> O
+    K --> O
+    L --> O
+    M --> O
+    N --> O
+    
+    O --> P[📊 Сохранение в профиль]
+    P --> Q[📸 Share в соцсети]
+    Q --> R[🎯 Возврат к обучению]
+    
+    style B fill:#f5576c,color:white
+    style D fill:#4facfe,color:white
+    style N fill:#ffd700,color:black
+    style M fill:#9333ea,color:white
+            </div>
+
+            <div class="description">
+                <h4>🎲 Вероятности выпадения призов</h4>
+                <ul>
+                    <li><strong>50 XP (20%):</strong> Маленький утешительный приз</li>
+                    <li><strong>100 XP (20%):</strong> Средний приз, хорошая награда</li>
+                    <li><strong>2x XP буст на 1 час (15%):</strong> Ускоритель прогресса</li>
+                    <li><strong>Заморозка стрика на 1 день (15%):</strong> Страховка от потери</li>
+                    <li><strong>Редкий скин профиля (10%):</strong> Косметическая награда</li>
+                    <li><strong>3x XP буст на 30 мин (10%):</strong> Мощный ускоритель</li>
+                    <li><strong>Легендарный скин (5%):</strong> Очень редкая награда</li>
+                    <li><strong>Джекпот 500 XP (5%):</strong> Супер-приз</li>
+                </ul>
+            </div>
+
+            <div class="mermaid">
+flowchart LR
+    A[📅 Ежедневное<br/>посещение] --> B[✅ Выполнение<br/>заданий]
+    B --> C[📊 Накопление<br/>дней стрика]
+    C --> D{7 дней<br/>подряд?}
+    D -->|Да| E[🎰 РУЛЕТКА]
+    D -->|Нет| F[💪 Продолжать]
+    E --> G[🎁 Получение приза]
+    G --> H[📸 Share в соцсети]
+    H --> I[👥 Привлечение<br/>новых пользователей]
+    I --> J[📈 Рост базы<br/>пользователей]
+    J --> A
+    F --> A
+    
+    style E fill:#f5576c,color:white
+    style H fill:#4facfe,color:white
+    style I fill:#43e97b,color:white
+            </div>
+
+            <div class="description">
+                <h4>📈 Влияние на вовлечённость</h4>
+                <ul>
+                    <li><strong>Удержание Day 7+:</strong> Мотивация не прерывать стрик ради рулетки</li>
+                    <li><strong>Вирусный эффект:</strong> Share призов в соцсетях привлекает новых пользователей</li>
+                    <li><strong>Социальное доказательство:</strong> Редкие скины показывают статус пользователя</li>
+                    <li><strong>FOMO (Fear Of Missing Out):</strong> Страх упустить редкий приз</li>
+                    <li><strong>Прогрессивная сложность:</strong> После 14, 21, 30 дней — улучшенные пулы призов</li>
+                </ul>
+            </div>
+
+            <div class="future-feature">
+                <h4>🔮 Планы развития</h4>
+                <ul>
+                    <li><strong>Фаза 2:</strong> Ежедневные мини-задания (3 вопроса = дополнительный приз)</li>
+                    <li><strong>Фаза 3:</strong> Сезонные события с уникальными призами</li>
+                    <li><strong>Фаза 4:</strong> Лидерборды между друзьями</li>
+                    <li><strong>Фаза 5:</strong> Командные челленджи (групповые стрики)</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- СВОДНАЯ ТАБЛИЦА -->
+        <div class="section">
+            <h2>📊 Сводная таблица механик вовлечения</h2>
+            
+            <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+                <thead>
+                    <tr style="background: #667eea; color: white;">
+                        <th style="padding: 12px; text-align: left; border-radius: 8px 0 0 0;">Механика</th>
+                        <th style="padding: 12px;">Когда активируется</th>
+                        <th style="padding: 12px;">Награда</th>
+                        <th style="padding: 12px;">Влияние на удержание</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr style="border-bottom: 1px solid #ddd;">
+                        <td style="padding: 12px;">🔥 Стрик</td>
+                        <td style="padding: 12px;">Ежедневно</td>
+                        <td style="padding: 12px;">+10 XP / урок</td>
+                        <td style="padding: 12px;">⭐⭐⭐⭐⭐</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #ddd; background: #f8f9fa;">
+                        <td style="padding: 12px;">📚 Уроки</td>
+                        <td style="padding: 12px;">Каждые 24 часа</td>
+                        <td style="padding: 12px;">Прогресс + XP</td>
+                        <td style="padding: 12px;">⭐⭐⭐⭐</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #ddd;">
+                        <td style="padding: 12px;">🎁 Daily Reward</td>
+                        <td style="padding: 12px;">После урока</td>
+                        <td style="padding: 12px;">10-50 XP</td>
+                        <td style="padding: 12px;">⭐⭐⭐⭐</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #ddd; background: #f8f9fa;">
+                        <td style="padding: 12px;">🎰 Рулетка</td>
+                        <td style="padding: 12px;">День 7, 14, 21...</td>
+                        <td style="padding: 12px;">50-500 XP + бусты</td>
+                        <td style="padding: 12px;">⭐⭐⭐⭐⭐</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #ddd;">
+                        <td style="padding: 12px;">🏆 Скины профиля</td>
+                        <td style="padding: 12px;">Редко из рулетки</td>
+                        <td style="padding: 12px;">Косметика</td>
+                        <td style="padding: 12px;">⭐⭐⭐</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 12px;">📸 Share в соцсети</td>
+                        <td style="padding: 12px;">После рулетки</td>
+                        <td style="padding: 12px;">Вирусный охват</td>
+                        <td style="padding: 12px;">⭐⭐⭐⭐</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'base',
+            themeVariables: {
+                primaryColor: '#667eea',
+                primaryTextColor: '#fff',
+                primaryBorderColor: '#667eea',
+                lineColor: '#764ba2',
+                secondaryColor: '#f093fb',
+                tertiaryColor: '#f8f9fa'
+            },
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true,
+                curve: 'basis'
+            }
+        });
+    </script>
+</body>
+</html>

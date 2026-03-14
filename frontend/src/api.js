@@ -6,6 +6,9 @@ export const setUserId = (email) => {
   localStorage.setItem("pulse_email", email)
 }
 
+export const getUserId = () => USER_ID
+
+// ─── Auth ───
 export const registerUser = (email, name, password) =>
   fetch(`${BASE}/register`, {
     method: "POST",
@@ -20,57 +23,128 @@ export const loginUser = (email, password) =>
     body: JSON.stringify({ email, password })
   }).then(r => r.json())
 
-const USE_MOCK = false // ← поменяй на false когда backend готов
+// ─── Dashboard ───
+export const getDashboard = () =>
+  fetch(`${BASE}/dashboard?userId=${USER_ID}`).then(r => r.json())
 
-const MOCK_CARD = {
-  id: 1,
-  text: "Что такое акция?",
-  difficulty: 1,
-  topic: "акции",
-  options: ["Долговая бумага", "Доля в компании", "Гос. облигация", "Фьючерс"],
-  correct_index: 1,
-  explanations: [
-    "Долговая бумага — это облигация. Компания берёт деньги в долг и обещает вернуть с процентами.",
-    "Акция — это доля в компании. Владелец акции становится совладельцем бизнеса и участвует в его прибыли.",
-    "Государственная облигация — это долговая бумага, выпущенная государством, а не акция.",
-    "Фьючерс — это контракт на покупку актива в будущем по заранее оговорённой цене."
-  ]
-}
-
-export const getExperience = () =>
-  USE_MOCK
-    ? Promise.resolve(MOCK_CARD)
-    : fetch(`${BASE}/experience?userId=${USER_ID}`).then(r => r.json())
-
-export const postInteraction = (cardId, answer_index) =>
-  USE_MOCK
-    ? Promise.resolve({ is_correct: answer_index === 1, correct_index: 1, streak: 3 })
-    : fetch(`${BASE}/interactions`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: USER_ID, cardId, answer_index })
-      }).then(r => r.json())
-
+// ─── Progress ───
 export const getProgress = () =>
-  USE_MOCK
-    ? Promise.resolve({ streak: 3, correct_total: 7 })
-    : fetch(`${BASE}/progress?userId=${USER_ID}`).then(r => r.json())
+  fetch(`${BASE}/progress?userId=${USER_ID}`).then(r => r.json())
 
-export const getDailyCards = () =>
-  fetch(`${BASE}/daily-cards?userId=${USER_ID}`).then(r => r.json())
+// ─── Portfolio ───
+export const getPortfolio = () =>
+  fetch(`${BASE}/portfolio?userId=${USER_ID}`).then(r => r.json())
 
-export const getCardById = (cardId) =>
-  fetch(`${BASE}/experience?userId=${USER_ID}&cardId=${cardId}`).then(r => r.json())
-
-export const getLessons = () =>
-  fetch(`${BASE}/lessons?userId=${USER_ID}`).then(r => r.json())
-
-export const getLessonCards = (lessonId) =>
-  fetch(`${BASE}/lesson-cards?userId=${USER_ID}&lessonId=${lessonId}`).then(r => r.json())
-
-export const completeLesson = (lessonId) =>
-  fetch(`${BASE}/complete-lesson`, {
+export const trade = (ticker, shares, action) =>
+  fetch(`${BASE}/trade`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ userId: USER_ID, lessonId })
+    body: JSON.stringify({ userId: USER_ID, ticker, shares, action })
+  }).then(r => r.json())
+
+export const checkPortfolio = () =>
+  fetch(`${BASE}/check-portfolio?userId=${USER_ID}`, { method: "POST" }).then(r => r.json())
+
+// ─── Stocks / Market ───
+export const getStocks = () =>
+  fetch(`${BASE}/stocks?userId=${USER_ID}`).then(r => r.json())
+
+export const getStockDetail = (ticker) =>
+  fetch(`${BASE}/stock/${ticker}?userId=${USER_ID}`).then(r => r.json())
+
+export const getMarketEvent = () =>
+  fetch(`${BASE}/market-event?userId=${USER_ID}`).then(r => r.json())
+
+export const marketEventAction = (eventId, action) =>
+  fetch(`${BASE}/market-event/action`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ userId: USER_ID, eventId, action })
+  }).then(r => r.json())
+
+// ─── Lessons V2 ───
+export const getModules = () =>
+  fetch(`${BASE}/v2/modules?userId=${USER_ID}`).then(r => r.json())
+
+export const getModuleLessons = (moduleId) =>
+  fetch(`${BASE}/v2/lessons?userId=${USER_ID}&moduleId=${moduleId}`).then(r => r.json())
+
+export const getLessonDetail = (lessonId) =>
+  fetch(`${BASE}/v2/lesson/${lessonId}?userId=${USER_ID}`).then(r => r.json())
+
+export const completeLesson = (lessonId, correctAnswers = 0, totalQuestions = 0) =>
+  fetch(`${BASE}/v2/complete-lesson`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ userId: USER_ID, lessonId, correctAnswers, totalQuestions })
+  }).then(r => r.json())
+
+// ─── Achievements ───
+export const getAchievements = () =>
+  fetch(`${BASE}/achievements?userId=${USER_ID}`).then(r => r.json())
+
+// ─── Daily Missions ───
+export const getDailyMissions = () =>
+  fetch(`${BASE}/daily-missions?userId=${USER_ID}`).then(r => r.json())
+
+// ─── Diary ───
+export const getDiary = (limit = 20) =>
+  fetch(`${BASE}/diary?userId=${USER_ID}&limit=${limit}`).then(r => r.json())
+
+// ─── Transactions ───
+export const getTransactions = (limit = 30) =>
+  fetch(`${BASE}/transactions?userId=${USER_ID}&limit=${limit}`).then(r => r.json())
+
+// ─── Levels ───
+export const getLevels = () =>
+  fetch(`${BASE}/levels`).then(r => r.json())
+
+// ─── Streak Freeze ───
+export const buyFreeze = () =>
+  fetch(`${BASE}/buy-freeze`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ userId: USER_ID })
+  }).then(r => r.json())
+
+// ─── Onboarding ───
+export const getOnboardingQuestions = () =>
+  fetch(`${BASE}/onboarding/questions`).then(r => r.json())
+
+export const getOnboardingStatus = () =>
+  fetch(`${BASE}/onboarding/status?userId=${USER_ID}`).then(r => r.json())
+
+export const submitOnboarding = (answers) =>
+  fetch(`${BASE}/onboarding/submit`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ userId: USER_ID, answers })
+  }).then(r => r.json())
+
+export const getOnboardingResult = () =>
+  fetch(`${BASE}/onboarding/result?userId=${USER_ID}`).then(r => r.json())
+
+// ─── Adaptive Learning ───
+export const getAdaptiveMastery = () =>
+  fetch(`${BASE}/adaptive/mastery?userId=${USER_ID}`).then(r => r.json())
+
+export const getAdaptiveRecommendation = () =>
+  fetch(`${BASE}/adaptive/recommendation?userId=${USER_ID}`).then(r => r.json())
+
+export const recordAdaptiveAnswer = (topic, questionId, isCorrect, timeMs = 0, source = "lesson") =>
+  fetch(`${BASE}/adaptive/answer`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ userId: USER_ID, topic, questionId, isCorrect, timeMs, source })
+  }).then(r => r.json())
+
+// ─── Legacy ───
+export const getExperience = () =>
+  fetch(`${BASE}/experience?userId=${USER_ID}`).then(r => r.json())
+
+export const postInteraction = (cardId, answer_index) =>
+  fetch(`${BASE}/interactions`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ userId: USER_ID, cardId, answer_index })
   }).then(r => r.json())
