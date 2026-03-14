@@ -548,17 +548,87 @@ def dashboard(userId: Optional[str] = Query(default=None), current_user: str = D
     xp = int(prog["xp"] if prog else 0)
     streak = int(prog["streak"] if prog else 0)
     balance = float(prog["balance"] if prog else START_BALANCE)
+    user_level = int(prog["level"] if prog else 1)
+
+    # Portfolio with total_value
+    holdings = db.execute("SELECT ticker, shares, avg_price FROM portfolio WHERE user_id=? AND shares > 0", (user_id,)).fetchall()
+    prices = get_daily_prices(user_id)
+    total_value = balance
+    for h in holdings:
+        stock = STOCK_MAP.get(h["ticker"])
+        current = float(prices.get(h["ticker"], stock["price"] if stock else 0))
+        total_value += float(h["shares"]) * current
+    total_pnl = total_value - START_BALANCE
+    total_pnl_pct = round(total_pnl / START_BALANCE * 100, 2) if START_BALANCE > 0 else 0
+
+    # Stats
     total_trades = db.execute("SELECT COUNT(*) AS cnt FROM transactions WHERE user_id=?", (user_id,)).fetchone()["cnt"]
     lessons_done = db.execute("SELECT COUNT(*) AS cnt FROM lesson_completions WHERE user_id=?", (user_id,)).fetchone()["cnt"]
     ach_count = db.execute("SELECT COUNT(*) AS cnt FROM user_achievements WHERE user_id=?", (user_id,)).fetchone()["cnt"]
+    completed_ids = {r["lesson_id"] for r in db.execute("SELECT lesson_id FROM lesson_completions WHERE user_id=?", (user_id,)).fetchall()}
+
+    # Next lesson
+    next_lesson_data = None
+    for module in MODULES:
+        if user_level < module["required_level"]:
+            continue
+        for lesson in get_module_lessons(module["id"]):
+            if lesson["id"] not in completed_ids:
+                next_lesson_data = {
+                    "id": lesson["id"],
+                    "title": lesson["title"],
+                    "subtitle": lesson["subtitle"],
+                    "duration_min": lesson["duration_min"],
+                    "xp_reward": lesson["xp_reward"],
+                    "module_title": module["title"],
+                    "module_icon": module["icon"],
+                }
+                break
+        if next_lesson_data:
+            break
+
+    # Daily missions
+    today = date.today().isoformat()
+    missions_raw = get_daily_missions(user_id)
+    done_missions = {r["mission"] for r in db.execute("SELECT mission FROM daily_missions WHERE user_id=? AND date=? AND completed=1", (user_id, today)).fetchall()}
+    daily_missions_out = [{"id": m["id"], "text": m["text"], "icon": m.get("icon", ""), "xp": m.get("xp", 25), "completed": m["id"] in done_missions} for m in missions_raw]
+
+    # Module progress
+    module_progress_out = []
+    for module in MODULES:
+        mod_lessons = get_module_lessons(module["id"])
+        done = sum(1 for l in mod_lessons if l["id"] in completed_ids)
+        total = len(mod_lessons)
+        module_progress_out.append({"id": module["id"], "title": module["title"], "icon": module["icon"], "completed_count": done, "total_lessons": total, "progress_pct": round(done / total * 100) if total else 0})
+
+    # Market event
+    event_data = get_daily_event(user_id)
+    event_out = None
+    if event_data:
+        seen = db.execute("SELECT id FROM market_events WHERE user_id=? AND event_id=?", (user_id, event_data.get("id", ""))).fetchone()
+        impact_map = event_data.get("impact", {})
+        affected = {}
+        for h in holdings:
+            stock = STOCK_MAP.get(h["ticker"])
+            if stock and h["ticker"] in impact_map:
+                impact_pct = round(impact_map[h["ticker"]] * 100, 2)
+                value = float(h["shares"]) * float(prices.get(h["ticker"], stock["price"]))
+                affected[h["ticker"]] = {"name": stock["name"], "impact_pct": impact_pct, "impact_amount": round(value * impact_pct / 100)}
+        event_out = {"id": event_data.get("id"), "headline": event_data.get("headline", ""), "detail": event_data.get("detail", ""), "affected_holdings": affected, "seen": seen is not None}
+
     onboarding = db.execute("SELECT level_id FROM onboarding_results WHERE user_id=?", (user_id,)).fetchone()
     db.close()
+
     return {
         "level_info": get_level_for_xp(xp),
         "xp": xp,
         "streak": streak,
-        "portfolio": {"balance": balance},
-        "stats": {"trades_made": total_trades, "lessons_completed": lessons_done, "achievements": ach_count},
+        "portfolio": {"balance": round(balance, 2), "total_value": round(total_value, 2), "total_pnl": round(total_pnl, 2), "total_pnl_pct": total_pnl_pct},
+        "next_lesson": next_lesson_data,
+        "daily_missions": daily_missions_out,
+        "market_event": event_out,
+        "module_progress": module_progress_out,
+        "stats": {"trades_made": total_trades, "lessons_completed": lessons_done, "achievements": ach_count, "profit_pct": total_pnl_pct},
         "onboarding_completed": onboarding is not None,
     }
 

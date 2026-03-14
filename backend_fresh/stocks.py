@@ -71,7 +71,7 @@ def get_daily_event(user_id: str):
 
 def get_daily_missions(user_id: str):
     return [
-        {"id": "complete_lesson", "title": "Пройди урок"},
-        {"id": "make_trade", "title": "Сделай сделку"},
-        {"id": "check_portfolio", "title": "Проверь портфель"},
+        {"id": "complete_lesson", "text": "Пройди урок", "icon": "📚", "xp": 25},
+        {"id": "make_trade", "text": "Сделай сделку", "icon": "💰", "xp": 25},
+        {"id": "check_portfolio", "text": "Проверь портфель", "icon": "📊", "xp": 25},
     ]
