@@ -21,6 +21,13 @@ TOPIC_NAMES = {
     "portfolio": "Портфель и управление портфелем",
 }
 
+# Обратный маппинг: "Акции" -> "stocks"
+NAME_TO_TOPIC = {}
+for _id, _name in TOPIC_NAMES.items():
+    NAME_TO_TOPIC[_name] = _id
+    NAME_TO_TOPIC[_name.lower()] = _id
+    NAME_TO_TOPIC[_id] = _id
+
 DIFFICULTY_LABELS = {
     1: "лёгкий (базовые понятия, определения)",
     2: "средний (применение знаний, анализ ситуаций)",
@@ -372,9 +379,9 @@ async def generate_lesson(mastery: dict, weak_topic: str = None, strong_topic: s
             valid_screens.append(screen)
         elif screen.get("type") == "quiz" and all(k in screen for k in ("question", "options", "correct_index")):
             if len(screen["options"]) == 4 and isinstance(screen["correct_index"], int):
-                # Добавляем topic если не указан
-                if "topic" not in screen:
-                    screen["topic"] = weak_topic
+                # Нормализуем topic: "Акции" -> "stocks"
+                raw_topic = screen.get("topic", "")
+                screen["topic"] = NAME_TO_TOPIC.get(raw_topic, NAME_TO_TOPIC.get(raw_topic.lower(), weak_topic)) if raw_topic else weak_topic
                 valid_screens.append(screen)
 
     if len(valid_screens) < 3:

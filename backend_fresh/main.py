@@ -499,23 +499,26 @@ class CompleteLessonBody(BaseModel):
 def v2_complete_lesson(body: CompleteLessonBody, current_user: str = Depends(get_current_user)):
     user_id = resolve_user_id(body.userId, current_user)
     lesson = LESSON_MAP.get(body.lessonId)
-    if not lesson:
-        raise HTTPException(status_code=404, detail="lesson_not_found")
+    xp_reward = 35  # дефолт для AI-уроков
+
+    if lesson:
+        xp_reward = int(lesson["xp_reward"])
+
     db = get_db()
     exists = db.execute("SELECT id FROM lesson_completions WHERE user_id=? AND lesson_id=?", (user_id, body.lessonId)).fetchone()
     if exists:
         db.close()
         return {"ok": True, "duplicate": True}
-    db.execute("INSERT INTO lesson_completions (user_id, lesson_id, xp_earned) VALUES (?,?,?)", (user_id, body.lessonId, lesson["xp_reward"]))
+    db.execute("INSERT INTO lesson_completions (user_id, lesson_id, xp_earned) VALUES (?,?,?)", (user_id, body.lessonId, xp_reward))
     if body.correctAnswers > 0:
         db.execute("UPDATE progress SET correct_total = correct_total + ? WHERE user_id=?", (body.correctAnswers, user_id))
-    add_xp(db, user_id, int(lesson["xp_reward"]))
+    add_xp(db, user_id, xp_reward)
     streak = update_streak(db, user_id)
     complete_daily_mission(db, user_id, "complete_lesson")
     unlock_achievement(db, user_id, "first_step")
     db.commit()
     db.close()
-    return {"ok": True, "xp_earned": lesson["xp_reward"], "streak": streak}
+    return {"ok": True, "xp_earned": xp_reward, "streak": streak}
 
 
 @app.get("/daily-missions")
