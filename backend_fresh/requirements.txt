@@ -1,6 +1,8 @@
 fastapi
-uvicorn
+uvicorn[standard]
 pydantic
 email-validator
 bcrypt
 PyJWT
+numpy
+scikit-learn
