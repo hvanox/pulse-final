@@ -1,6 +1,9 @@
 import json
 import os
 from datetime import date, datetime, timedelta, timezone
+
+from dotenv import load_dotenv
+load_dotenv()
 from typing import Any, Dict, List, Optional
 
 import bcrypt
@@ -14,6 +17,7 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from ml.adaptive_engine import get_default_engine
 from adaptive_questions import get_adaptive_question, get_questions_for_lesson, ADAPTIVE_QUESTIONS
+from llm_generator import generate_question, generate_lesson, select_topic_and_difficulty, get_recent_questions, get_lesson_stubs, analyze_mastery
 from cards import CARDS
 from database import START_BALANCE, get_db, init_db
 from lessons_v2 import LESSONS, LESSON_MAP, MODULE_MAP, MODULES, get_lesson, get_module_lessons
@@ -428,7 +432,7 @@ def v2_modules(userId: Optional[str] = Query(default=None), current_user: str = 
     prog = db.execute("SELECT level FROM progress WHERE user_id=?", (user_id,)).fetchone()
     user_level = int(prog["level"] if prog else 1)
     completed = {r["lesson_id"] for r in db.execute("SELECT lesson_id FROM lesson_completions WHERE user_id=?", (user_id,)).fetchall()}
-    db.close()
+
     out = []
     for module in MODULES:
         lessons = get_module_lessons(module["id"])
@@ -443,6 +447,23 @@ def v2_modules(userId: Optional[str] = Query(default=None), current_user: str = 
                 "locked": user_level < module["required_level"],
             }
         )
+
+    # AI-модуль — персональное обучение
+    mastery = ml_engine.compute_mastery_from_db(db, user_id)
+    db.close()
+    ai_stubs = get_lesson_stubs(mastery)
+    out.append({
+        "id": "m_ai",
+        "title": "Персональное обучение",
+        "icon": "🤖",
+        "required_level": 1,
+        "completed_count": 0,
+        "total_lessons": len(ai_stubs),
+        "progress_pct": 0,
+        "locked": False,
+        "generated": True,
+    })
+
     return out
 
 
@@ -451,6 +472,13 @@ def v2_lessons(moduleId: str, userId: Optional[str] = Query(default=None), curre
     user_id = resolve_user_id(userId, current_user)
     db = get_db()
     completed = {r["lesson_id"] for r in db.execute("SELECT lesson_id FROM lesson_completions WHERE user_id=?", (user_id,)).fetchall()}
+
+    # AI-модуль — уроки генерируются на основе mastery
+    if moduleId == "m_ai":
+        mastery = ml_engine.compute_mastery_from_db(db, user_id)
+        db.close()
+        return get_lesson_stubs(mastery)
+
     db.close()
     lessons = get_module_lessons(moduleId)
     out = []
@@ -471,6 +499,24 @@ def v2_lessons(moduleId: str, userId: Optional[str] = Query(default=None), curre
             }
         )
     return out
+
+
+@app.get("/v2/generate-lesson")
+async def v2_generate_lesson(
+    weakTopic: Optional[str] = Query(default=None),
+    strongTopic: Optional[str] = Query(default=None),
+    userId: Optional[str] = Query(default=None),
+    current_user: str = Depends(get_current_user),
+):
+    """Генерирует персональный урок через LLM на основе mastery пользователя."""
+    user_id = resolve_user_id(userId, current_user)
+    db = get_db()
+    mastery = ml_engine.compute_mastery_from_db(db, user_id)
+    db.close()
+    lesson = await generate_lesson(mastery, weakTopic, strongTopic)
+    if not lesson:
+        raise HTTPException(status_code=500, detail="lesson_generation_failed")
+    return {**lesson, "completed": False}
 
 
 @app.get("/v2/lesson/{lessonId}")
@@ -882,6 +928,50 @@ def adaptive_lesson_questions(
         "ok": True,
         "questions": [{**q, "options": [{"text": o} for o in q["options"]]} for q in questions],
         "meta": {"topic": topic, "mastery": topic_mastery, "count": len(questions)},
+    }
+
+
+@app.get("/adaptive/generate-question")
+async def adaptive_generate_question(
+    topic: Optional[str] = Query(default=None),
+    userId: Optional[str] = Query(default=None),
+    current_user: str = Depends(get_current_user),
+):
+    """LLM-powered: генерирует уникальный вопрос через Claude API на основе mastery."""
+    user_id = resolve_user_id(userId, current_user)
+    db = get_db()
+    mastery = ml_engine.compute_mastery_from_db(db, user_id)
+
+    # Если тема не указана — выбираем автоматически по mastery
+    if topic:
+        topic_mastery = mastery.get(topic, {"mastery": 0.1, "answers": 0})["mastery"]
+        if topic_mastery < 0.3:
+            difficulty = 1
+        elif topic_mastery < 0.6:
+            difficulty = 2
+        else:
+            difficulty = 3
+    else:
+        topic, difficulty = select_topic_and_difficulty(mastery)
+
+    recent = get_recent_questions(db, user_id, topic)
+    db.close()
+
+    question = await generate_question(topic, difficulty, recent)
+    if not question:
+        return {"ok": False, "error": "generation_failed", "fallback": True}
+
+    topic_data = mastery.get(topic, {"mastery": 0.0, "answers": 0})
+    return {
+        "ok": True,
+        "question": {**question, "options": [{"text": o} for o in question["options"]]},
+        "meta": {
+            "topic": topic,
+            "topic_name": next((t["name"] for t in LEARNING_TOPICS if t["id"] == topic), topic),
+            "mastery": topic_data["mastery"],
+            "difficulty": difficulty,
+            "generated": True,
+        },
     }
 
 

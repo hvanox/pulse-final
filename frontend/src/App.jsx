@@ -16,6 +16,7 @@ export default function App() {
   const [tab, setTab] = useState("home")
   const [user, setUser] = useState(null)
   const [lessonId, setLessonId] = useState(null)
+  const [aiLessonData, setAiLessonData] = useState(null)
   const [refreshKey, setRefreshKey] = useState(0)
   const [needsOnboarding, setNeedsOnboarding] = useState(false)
   const [initializing, setInitializing] = useState(true)
@@ -80,8 +81,9 @@ export default function App() {
     setScreen(id)
   }
 
-  const handleStartLesson = (id) => {
+  const handleStartLesson = (id, aiData = null) => {
     setLessonId(id)
+    setAiLessonData(aiData || null)
     setScreen("lesson")
   }
 
@@ -154,6 +156,7 @@ export default function App() {
         {screen === "lesson" && (
           <LessonScreen
             lessonId={lessonId}
+            aiLessonData={aiLessonData}
             onComplete={handleLessonComplete}
             onBack={handleBack}
           />

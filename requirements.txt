@@ -6,3 +6,5 @@ bcrypt
 PyJWT
 numpy
 scikit-learn
+openai
+python-dotenv

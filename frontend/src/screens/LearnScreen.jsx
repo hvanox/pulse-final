@@ -61,12 +61,12 @@ export default function LearnScreen({ onStartLesson }) {
                     ...s.lessonRow,
                     opacity: lesson.locked ? 0.4 : 1,
                     cursor: lesson.locked ? "default" : "pointer",
-                  }} onClick={() => !lesson.locked && onStartLesson(lesson.id)}>
+                  }} onClick={() => !lesson.locked && onStartLesson(lesson.id, lesson.generated ? lesson : null)}>
                     <div style={{
                       ...s.lessonDot,
-                      background: lesson.completed ? "#21a038" : lesson.locked ? "rgba(0,0,0,0.06)" : "#ffdd2d",
+                      background: lesson.completed ? "#21a038" : lesson.locked ? "rgba(0,0,0,0.06)" : lesson.generated ? "#9c27b0" : "#ffdd2d",
                     }}>
-                      {lesson.completed ? "✓" : lesson.locked ? "🔒" : li + 1}
+                      {lesson.completed ? "✓" : lesson.locked ? "🔒" : lesson.generated ? "🤖" : li + 1}
                     </div>
                     <div style={s.lessonInfo}>
                       <div style={s.lessonTitle}>{lesson.title}</div>
@@ -76,6 +76,9 @@ export default function LearnScreen({ onStartLesson }) {
                       <span>⏱ {lesson.duration_min} мин</span>
                       <span style={{ color: "#ffdd2d" }}>+{lesson.xp_reward} XP</span>
                     </div>
+                    {lesson.generated && (
+                      <span style={s.completedBadge}>🤖</span>
+                    )}
                     {lesson.completed && (
                       <span style={s.completedBadge}>✅</span>
                     )}

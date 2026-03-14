@@ -105,6 +105,10 @@ export const getAdaptiveNextQuestion = (topic) => apiFetch(`${BASE}/adaptive/nex
 export const getAdaptiveLessonQuestions = (topic, count = 3) => apiFetch(`${BASE}/adaptive/lesson-questions?topic=${topic}&count=${count}&userId=${USER_ID}`)
 export const recordAdaptiveAnswer = (topic, questionId, isCorrect, timeMs = 0, source = "lesson") => apiFetch(`${BASE}/adaptive/answer`, POST_JSON({ userId: USER_ID, topic, questionId, isCorrect, timeMs, source }))
 
+// ─── LLM-Generated Questions & Lessons ───
+export const generateQuestion = (topic = null) => apiFetch(`${BASE}/adaptive/generate-question?userId=${USER_ID}${topic ? `&topic=${topic}` : ''}`)
+export const generateLesson = (weakTopic = null, strongTopic = null) => apiFetch(`${BASE}/v2/generate-lesson?userId=${USER_ID}${weakTopic ? `&weakTopic=${weakTopic}` : ''}${strongTopic ? `&strongTopic=${strongTopic}` : ''}`)
+
 // ─── Legacy ───
 export const getExperience = () => apiFetch(`${BASE}/experience?userId=${USER_ID}`)
 export const postInteraction = (cardId, answer_index) => apiFetch(`${BASE}/interactions`, POST_JSON({ userId: USER_ID, cardId, answer_index }))

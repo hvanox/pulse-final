@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
-import { getLessonDetail, completeLesson, trade, getAdaptiveLessonQuestions, getAdaptiveRecommendation, recordAdaptiveAnswer } from "../api"
+import { getLessonDetail, completeLesson, trade, getAdaptiveLessonQuestions, getAdaptiveRecommendation, recordAdaptiveAnswer, generateLesson } from "../api"
 
-export default function LessonScreen({ lessonId, onComplete, onBack }) {
+export default function LessonScreen({ lessonId, aiLessonData, onComplete, onBack }) {
   const [lesson, setLesson] = useState(null)
   const [screenIdx, setScreenIdx] = useState(0)
   const [selected, setSelected] = useState(null)
@@ -17,7 +17,19 @@ export default function LessonScreen({ lessonId, onComplete, onBack }) {
 
   useEffect(() => {
     setLoading(true)
-    getLessonDetail(lessonId).then(async (l) => {
+
+    // AI-урок: загружаем через LLM
+    const loadPromise = aiLessonData?.generated
+      ? generateLesson(aiLessonData.weak_topic, aiLessonData.strong_topic)
+      : getLessonDetail(lessonId)
+
+    loadPromise.then(async (l) => {
+      // AI-уроки уже содержат все вопросы — пропускаем адаптивные
+      if (l.generated) {
+        setLesson(l)
+        setLoading(false)
+        return
+      }
       const mainTopic = l.skill_topic || l.skill?.toLowerCase() || "stocks"
       try {
         // Load questions for main topic + get recommendation for weak topic
