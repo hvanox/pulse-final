@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime, timedelta
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -66,23 +66,6 @@ class Interaction(BaseModel):
 def post_interaction(body: Interaction):
     db = get_db()
     today = str(date.today())
-
-    existing = db.execute(
-        "SELECT id FROM interactions "
-        "WHERE user_id=? AND card_id=? AND date(created_at)=?",
-        (body.userId, body.cardId, today),
-    ).fetchone()
-    if existing:
-        prog = db.execute(
-            "SELECT * FROM progress WHERE user_id=?", (body.userId,)
-        ).fetchone()
-        db.close()
-        return {
-            "is_correct": None,
-            "correct_index": None,
-            "streak": prog["streak"] if prog else 0,
-            "duplicate": True,
-        }
 
     card = next((c for c in CARDS if c["id"] == body.cardId), None)
     is_correct = bool(card and body.answer_index == card["correct_index"])
@@ -155,6 +138,190 @@ def get_progress(userId: str):
 @app.post("/daily")
 def new_day():
     return {"ok": True}
+
+
+class RegisterBody(BaseModel):
+    email: str
+    name: str
+    password: str
+
+
+class LoginBody(BaseModel):
+    email: str
+    password: str
+
+
+@app.post("/register")
+def register(body: RegisterBody):
+    db = get_db()
+    existing = db.execute("SELECT email FROM users WHERE email=?", (body.email,)).fetchone()
+    if existing:
+        db.close()
+        return {"ok": False, "error": "Пользователь с такой почтой уже существует"}
+    db.execute(
+        "INSERT INTO users (email, name, password) VALUES (?,?,?)",
+        (body.email, body.name, body.password),
+    )
+    db.commit()
+    db.close()
+    return {"ok": True, "email": body.email, "name": body.name}
+
+
+@app.post("/login")
+def login(body: LoginBody):
+    db = get_db()
+    user = db.execute(
+        "SELECT * FROM users WHERE email=? AND password=?",
+        (body.email, body.password),
+    ).fetchone()
+    db.close()
+    if not user:
+        return {"ok": False, "error": "Неверная почта или пароль"}
+    return {"ok": True, "email": user["email"], "name": user["name"]}
+
+
+# Уроки: каждый урок = 3 карточки, отсортированные по сложности
+SORTED_CARDS = sorted(CARDS, key=lambda c: (c["difficulty"], c["id"]))
+LESSONS = []
+for i in range(0, len(SORTED_CARDS), 3):
+    group = SORTED_CARDS[i : i + 3]
+    LESSONS.append(
+        {
+            "id": i // 3 + 1,
+            "card_ids": [c["id"] for c in group],
+            "topic": group[0]["topic"],
+            "difficulty": max(c["difficulty"] for c in group),
+        }
+    )
+
+
+@app.get("/lessons")
+def get_lessons(userId: str):
+    """Return lessons with lock/complete status. After 2nd lesson, 24h cooldown."""
+    db = get_db()
+    completions = db.execute(
+        "SELECT lesson_id, completed_at FROM lesson_completions WHERE user_id=?",
+        (userId,),
+    ).fetchall()
+    db.close()
+
+    done_map = {}
+    for r in completions:
+        done_map[r["lesson_id"]] = r["completed_at"]
+
+    now = datetime.utcnow()
+    completed_count = 0
+    result = []
+
+    for lesson in LESSONS:
+        completed_at = done_map.get(lesson["id"])
+        is_completed = completed_at is not None
+
+        # Unlock logic
+        if lesson["id"] == 1:
+            locked = False
+            unlock_at = None
+        else:
+            prev_completed_at = done_map.get(lesson["id"] - 1)
+            if prev_completed_at is None:
+                locked = True
+                unlock_at = None
+            elif completed_count >= 2:
+                # After 2nd completed lesson, 24h cooldown
+                prev_time = datetime.fromisoformat(prev_completed_at)
+                unlock_time = prev_time + timedelta(hours=24)
+                locked = now < unlock_time
+                unlock_at = unlock_time.isoformat() if locked else None
+            else:
+                locked = False
+                unlock_at = None
+
+        if is_completed:
+            locked = False
+            unlock_at = None
+
+        result.append(
+            {
+                "id": lesson["id"],
+                "card_ids": lesson["card_ids"],
+                "topic": lesson["topic"],
+                "difficulty": lesson["difficulty"],
+                "completed": is_completed,
+                "locked": locked,
+                "unlock_at": unlock_at,
+                "question_count": len(lesson["card_ids"]),
+            }
+        )
+
+        if is_completed:
+            completed_count += 1
+
+    return result
+
+
+@app.get("/lesson-cards")
+def get_lesson_cards(userId: str, lessonId: int):
+    """Return the full card data for a lesson's questions."""
+    lesson = next((l for l in LESSONS if l["id"] == lessonId), None)
+    if not lesson:
+        return []
+    return [c for c in CARDS if c["id"] in lesson["card_ids"]]
+
+
+class LessonComplete(BaseModel):
+    userId: str
+    lessonId: int
+
+
+@app.post("/complete-lesson")
+def complete_lesson(body: LessonComplete):
+    db = get_db()
+    existing = db.execute(
+        "SELECT id FROM lesson_completions WHERE user_id=? AND lesson_id=?",
+        (body.userId, body.lessonId),
+    ).fetchone()
+    if existing:
+        db.close()
+        return {"ok": True, "duplicate": True}
+    db.execute(
+        "INSERT INTO lesson_completions (user_id, lesson_id) VALUES (?,?)",
+        (body.userId, body.lessonId),
+    )
+    db.commit()
+    db.close()
+    return {"ok": True}
+
+
+@app.get("/daily-cards")
+def get_daily_cards(userId: str):
+    """Return all cards sorted by difficulty with completion status for today."""
+    db = get_db()
+    today = str(date.today())
+    rows = db.execute(
+        "SELECT card_id, is_correct FROM interactions "
+        "WHERE user_id=? AND date(created_at)=?",
+        (userId, today),
+    ).fetchall()
+    done_map = {r["card_id"]: bool(r["is_correct"]) for r in rows}
+    db.close()
+
+    sorted_cards = sorted(CARDS, key=lambda c: (c["difficulty"], c["id"]))
+    result = []
+    unlocked = True
+    for card in sorted_cards:
+        completed = done_map.get(card["id"])
+        result.append({
+            "id": card["id"],
+            "topic": card["topic"],
+            "difficulty": card["difficulty"],
+            "text": card["text"],
+            "locked": not unlocked,
+            "completed": completed is not None,
+            "correct": completed if completed is not None else None,
+        })
+        if completed is None:
+            unlocked = False
+    return result
 
 
 @app.get("/audit")

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 import { getExperience, postInteraction } from "../api"
 
-export default function CardScreen({ onDone }) {
+export default function CardScreen({ onDone, onBack }) {
   const [card, setCard] = useState(null)
   const [loading, setLoading] = useState(true)
   const [selected, setSelected] = useState(null)
@@ -67,6 +67,11 @@ export default function CardScreen({ onDone }) {
   return (
     <div style={s.page}>
       <div style={s.card} className="fade-in">
+        {/* Back button */}
+        {onBack && (
+          <button style={s.backBtn} onClick={onBack}>← Назад к карте</button>
+        )}
+
         {/* Header */}
         <div style={s.cardHeader}>
           <div style={s.cardIcons}>
@@ -180,4 +185,5 @@ const s = {
   btn:         { width: "100%", padding: "14px 0", fontSize: 15, fontWeight: 600, borderRadius: 12, background: "#FFD600", color: "#1a1a1a", border: "none", cursor: "pointer" },
   skeleton:    { pointerEvents: "none" },
   skLine:      { background: "#f0f0f0", borderRadius: 6, animation: "pulse 1.4s ease-in-out infinite" },
+  backBtn:     { background: "none", border: "none", color: "#888", fontSize: 14, cursor: "pointer", padding: "0 0 16px", fontFamily: "Inter, sans-serif", fontWeight: 500 },
 }

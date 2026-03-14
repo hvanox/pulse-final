@@ -29,6 +29,18 @@ def init_db():
             correct_total    INTEGER DEFAULT 0,
             last_active_date TEXT
         );
+        CREATE TABLE IF NOT EXISTS users (
+            email    TEXT PRIMARY KEY,
+            name     TEXT NOT NULL,
+            password TEXT NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS lesson_completions (
+            id           INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id      TEXT NOT NULL,
+            lesson_id    INTEGER NOT NULL,
+            completed_at TEXT DEFAULT (datetime('now')),
+            UNIQUE(user_id, lesson_id)
+        );
     """
     )
     conn.commit()

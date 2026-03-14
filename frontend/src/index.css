@@ -52,13 +52,13 @@
 
 body {
   margin: 0;
-  background: #fff;
+  background: #f8f9fa;
 }
 
 html, body, #root {
   width: 100%;
   min-height: 100vh;
-  background: #fff;
+  background: #f8f9fa;
 }
 
 #root {
@@ -144,4 +144,26 @@ code {
 
 .hint-animate {
   animation: hint-in 0.2s ease forwards;
+}
+
+@keyframes pulse-glow-anim {
+  0%, 100% {
+    box-shadow: 0 4px 20px rgba(255, 214, 0, 0.3);
+  }
+  50% {
+    box-shadow: 0 4px 30px rgba(255, 214, 0, 0.6), 0 0 0 8px rgba(255, 214, 0, 0.1);
+  }
+}
+
+.pulse-glow {
+  animation: pulse-glow-anim 2s ease-in-out infinite;
+}
+
+.pulse-glow:hover {
+  transform: scale(1.08);
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
