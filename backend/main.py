@@ -34,6 +34,22 @@ except ImportError:
     def select_next_card(user_id, history, all_cards):
         return random.choice(all_cards)
 
+# ML level predictor
+try:
+    from ml.features import extract_features
+    from ml.model import LevelPredictor
+    _level_predictor = LevelPredictor()
+except ImportError:
+    extract_features = None
+    _level_predictor = None
+
+# ML adaptive learning engine (Nazар's BKT + recommender + spaced repetition)
+try:
+    from ml.adaptive_engine import get_default_engine
+    _adaptive_engine = get_default_engine()
+except ImportError:
+    _adaptive_engine = None
+
 
 app = FastAPI(title="Pulse 2.0", version="2.0.0")
 
@@ -1131,29 +1147,59 @@ def get_onboarding_result(userId: str):
 
 @app.get("/adaptive/mastery")
 def get_mastery(userId: str):
-    """Get per-topic mastery scores."""
+    """Get per-topic mastery scores (BKT-based if ML available, else rule-based)."""
     db = get_db()
     mastery = compute_topic_mastery(db, userId)
-    db.close()
-    return {
+
+    result = {
         "mastery": mastery,
         "weak_topics": get_weak_topics(mastery),
         "strong_topics": get_strong_topics(mastery),
+        "method": "rule-based",
     }
+
+    if _adaptive_engine is not None:
+        bkt_mastery = _adaptive_engine.compute_mastery_from_db(db, userId)
+        result["bkt_mastery"] = bkt_mastery
+        result["method"] = "bkt+rule-based"
+
+    db.close()
+    return result
 
 
 @app.get("/adaptive/recommendation")
 def get_recommendation(userId: str):
-    """Get adaptive lesson recommendation."""
+    """Get adaptive lesson recommendation (ML-enhanced if available)."""
     db = get_db()
     mastery = compute_topic_mastery(db, userId)
     rec = recommend_next_content(db, userId, mastery)
     due = get_topics_due_for_review(db, userId, mastery)
-    db.close()
-    return {
+
+    result = {
         "recommendation": rec,
         "review_due": due[:3],
+        "method": "rule-based",
     }
+
+    if _adaptive_engine is not None:
+        from lessons_v2 import LESSONS
+        bkt_mastery = _adaptive_engine.compute_mastery_from_db(db, userId)
+        # Build content list from lessons for ML recommender
+        content_pool = [
+            {"id": l["id"], "topic": l.get("topic", ""), "difficulty": l.get("difficulty", 1), "title": l.get("title", "")}
+            for l in LESSONS
+            if l.get("topic") and l.get("difficulty")
+        ]
+        if content_pool:
+            ml_recs = _adaptive_engine.recommend_content(bkt_mastery, content_pool, top_k=3)
+            result["ml_recommendations"] = ml_recs
+        review_schedule = _adaptive_engine.get_review_schedule(db, userId, bkt_mastery)
+        result["review_schedule"] = review_schedule[:3]
+        result["topic_priorities"] = _adaptive_engine.get_topic_priorities(bkt_mastery)[:3]
+        result["method"] = "ml+rule-based"
+
+    db.close()
+    return result
 
 
 class AdaptiveAnswerBody(BaseModel):
@@ -1242,3 +1288,37 @@ def get_audit(userId: str):
     ).fetchall()
     db.close()
     return [dict(r) for r in rows]
+
+
+# ═══════════════════════════════════════════
+# ML
+# ═══════════════════════════════════════════
+
+@app.get("/ml/features/{userId}")
+def get_ml_features(userId: str):
+    """Return extracted ML feature vector for a user."""
+    if extract_features is None:
+        return {"error": "ML module not available"}
+    db = get_db()
+    features = extract_features(db, userId)
+    db.close()
+    return features
+
+
+class PredictLevelBody(BaseModel):
+    userId: str
+
+
+@app.post("/ml/predict-level")
+def predict_level(body: PredictLevelBody):
+    """
+    Predict user level using the ML model.
+    Falls back to rule-based logic if no trained model exists.
+    """
+    if _level_predictor is None or extract_features is None:
+        return {"error": "ML module not available"}
+    db = get_db()
+    features = extract_features(db, body.userId)
+    db.close()
+    result = _level_predictor.predict(features)
+    return result
