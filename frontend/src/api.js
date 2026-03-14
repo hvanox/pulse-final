@@ -1,7 +1,7 @@
 const BASE = "http://localhost:8000"
 const USER_ID = "demo-user-1"
 
-const USE_MOCK = true // ← поменяй на false когда backend готов
+const USE_MOCK = false // ← поменяй на false когда backend готов
 
 const MOCK_CARD = {
   id: 1,

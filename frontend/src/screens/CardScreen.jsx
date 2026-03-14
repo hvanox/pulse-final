@@ -7,6 +7,7 @@ export default function CardScreen({ onDone }) {
   const [selected, setSelected] = useState(null)
   const [confirmed, setConfirmed] = useState(false)
   const [result, setResult] = useState(null)
+  const [correctIndex, setCorrectIndex] = useState(null)
 
   useEffect(() => {
     getExperience().then(data => {
@@ -30,7 +31,18 @@ export default function CardScreen({ onDone }) {
   const handleConfirm = async () => {
     if (selected === null || confirmed) return
     setConfirmed(true)
+
+    // Если уже знаем правильный ответ (повторная попытка) — проверяем локально
+    if (correctIndex !== null) {
+      const isCorrect = selected === correctIndex
+      setResult({ is_correct: isCorrect, correct_index: correctIndex })
+      return
+    }
+
     const res = await postInteraction(card.id, selected)
+    if (res.correct_index !== null && res.correct_index !== undefined) {
+      setCorrectIndex(res.correct_index)
+    }
     setResult(res)
   }
 
