@@ -8,6 +8,7 @@ import AchievementsScreen from "./screens/AchievementsScreen"
 import SettingsScreen from "./screens/SettingsScreen"
 import AuthScreen from "./screens/AuthScreen"
 import OnboardingScreen from "./screens/OnboardingScreen"
+import Tutorial from "./components/Tutorial"
 import { setUserId, getOnboardingStatus, loginUser, clearAuth } from "./api"
 
 export default function App() {
@@ -18,6 +19,7 @@ export default function App() {
   const [refreshKey, setRefreshKey] = useState(0)
   const [needsOnboarding, setNeedsOnboarding] = useState(false)
   const [initializing, setInitializing] = useState(true)
+  const [showTutorial, setShowTutorial] = useState(false)
 
   // On mount: verify saved session is still valid
   useEffect(() => {
@@ -59,12 +61,18 @@ export default function App() {
     setRefreshKey(k => k + 1)
     setScreen("home")
     setTab("home")
+    // Show tutorial for new users
+    if (!localStorage.getItem("pulse_tutorial_done")) {
+      setShowTutorial(true)
+    }
   }
 
   const handleLogout = () => {
     setUser(null)
     setNeedsOnboarding(false)
+    setShowTutorial(false)
     clearAuth()
+    localStorage.removeItem("pulse_tutorial_done")
   }
 
   const handleNavigate = (id) => {
@@ -120,6 +128,12 @@ export default function App() {
   // Step 3: Main app
   return (
     <div style={s.layout}>
+      {showTutorial && (
+        <Tutorial
+          userName={user}
+          onComplete={() => setShowTutorial(false)}
+        />
+      )}
       <Sidebar
         active={tab}
         onNavigate={handleNavigate}

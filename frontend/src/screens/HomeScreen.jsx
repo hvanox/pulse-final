@@ -9,7 +9,7 @@ export default function HomeScreen({ onStartLesson, onNavigate }) {
   useEffect(() => { load() }, [])
 
   if (loading) return <div style={s.loading}>Загрузка...</div>
-  if (error || !data) return <div style={s.loading}><div style={{fontSize:48,marginBottom:16}}>⚠️</div><div style={{marginBottom:16}}>{error||"Ошибка"}</div><button onClick={load} style={{padding:"10px 24px",borderRadius:10,border:"1px solid rgba(255,255,255,0.15)",background:"transparent",color:"#b8860b",cursor:"pointer",fontFamily:"inherit"}}>Повторить</button></div>
+  if (error || !data) return <div style={s.loading}><div style={{fontSize:48,marginBottom:16}}>⚠️</div><div style={{marginBottom:16}}>{error||"Ошибка"}</div><button onClick={load} style={{padding:"10px 24px",borderRadius:10,border:"1px solid rgba(0,0,0,0.12)",background:"transparent",color:"#b8860b",cursor:"pointer",fontFamily:"inherit"}}>Повторить</button></div>
 
   const { portfolio, next_lesson, daily_missions, market_event, module_progress, stats } = data
 
@@ -114,11 +114,11 @@ export default function HomeScreen({ onStartLesson, onNavigate }) {
                 marketEventAction(market_event.id, ["details", "sell", "hold"][i])
                   .then(() => setData(d => ({ ...d, market_event: { ...market_event, seen: true } })))
               }} style={{
-                flex: 1, padding: "10px 0", border: "1px solid rgba(255,255,255,0.1)",
+                flex: 1, padding: "10px 0", border: "1px solid rgba(0,0,0,0.12)",
                 borderRadius: 8, background: "transparent", fontSize: 13, cursor: "pointer",
                 fontFamily: "inherit", transition: "all 0.2s",
-                color: i === 1 ? "#f44336" : i === 2 ? "#21a038" : "rgba(255,255,255,0.7)",
-                borderColor: i === 1 ? "rgba(239,83,80,0.3)" : i === 2 ? "rgba(76,175,80,0.3)" : "rgba(255,255,255,0.1)",
+                color: i === 1 ? "#f44336" : i === 2 ? "#21a038" : "rgba(0,0,0,0.6)",
+                borderColor: i === 1 ? "rgba(244,67,54,0.3)" : i === 2 ? "rgba(33,160,56,0.3)" : "rgba(0,0,0,0.12)",
               }}>{label}</button>
             ))}
           </div>
