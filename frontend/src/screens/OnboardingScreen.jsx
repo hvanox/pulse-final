@@ -315,6 +315,7 @@ export default function OnboardingScreen({ onComplete, userName, onLogout }) {
               disabled={revealed}
               style={{
                 ...s.optionBtn,
+                ...(selected !== null && selected !== i && !revealed ? s.optionDimmed : {}),
                 ...(selected === i && !revealed ? s.optionSelected : {}),
                 ...(revealed && selected === i ? s.optionRevealed : {}),
               }}
@@ -442,11 +443,15 @@ const s = {
     display: "flex", alignItems: "center", gap: 12,
     transition: "all 0.2s",
   },
+  optionDimmed: {
+    opacity: 0.5, borderColor: "rgba(0,0,0,0.06)",
+  },
   optionSelected: {
-    borderColor: "#ffdd2d", background: "rgba(255,221,45,0.1)",
+    borderColor: "#ffdd2d", borderWidth: 2, background: "rgba(255,221,45,0.1)",
+    boxShadow: "0 0 0 1px #ffdd2d",
   },
   optionRevealed: {
-    borderColor: "rgba(0,0,0,0.12)", opacity: 0.8,
+    borderColor: "rgba(0,0,0,0.12)", opacity: 0.7,
   },
   optionLetter: {
     width: 28, height: 28, borderRadius: "50%",
@@ -462,7 +467,7 @@ const s = {
   },
   nextBtn: {
     width: "100%", padding: "14px 0", border: "none", borderRadius: 12,
-    background: "rgba(255,221,45,0.2)", color: "#b8860b", fontSize: 15, fontWeight: 700,
+    background: "#ffdd2d", color: "#1a1a1a", fontSize: 15, fontWeight: 700,
     cursor: "pointer", fontFamily: "inherit",
   },
   // ─── Loading ───
