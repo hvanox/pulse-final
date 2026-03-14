@@ -21,6 +21,7 @@ export default function Sidebar({ active, onNavigate, userName, onLogout, refres
   const xpProgress = data?.level_info?.progress || 0
   const streak = data?.streak || 0
   const portfolioValue = data?.portfolio?.total_value ?? 0
+  const portfolioBalance = data?.portfolio?.balance ?? 0
   const portfolioPnl = data?.portfolio?.total_pnl_pct ?? 0
 
   const tabs = [
@@ -53,6 +54,11 @@ export default function Sidebar({ active, onNavigate, userName, onLogout, refres
           {portfolioPnl >= 0 ? "+" : ""}{portfolioPnl.toFixed(2)}%
           {portfolioPnl >= 0 ? " ↑" : " ↓"}
         </div>
+        {portfolioBalance < portfolioValue && (
+          <div style={s.portfolioFree}>
+            Свободно: {portfolioBalance.toLocaleString("ru-RU", { maximumFractionDigits: 0 })} ₽
+          </div>
+        )}
       </div>
 
       <div style={s.divider} />
@@ -167,6 +173,11 @@ const s = {
     fontSize: 13,
     fontWeight: 600,
     marginTop: 2,
+  },
+  portfolioFree: {
+    fontSize: 11,
+    color: "rgba(0,0,0,0.4)",
+    marginTop: 4,
   },
   nav: {
     display: "flex",
