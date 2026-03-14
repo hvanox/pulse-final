@@ -3,10 +3,18 @@ import { getDashboard } from "../api"
 
 export default function Sidebar({ active, onNavigate, userName, onLogout, refreshKey }) {
   const [data, setData] = useState(null)
+  const [localRefresh, setLocalRefresh] = useState(0)
 
   useEffect(() => {
     getDashboard().then(setData).catch(() => {})
-  }, [refreshKey, active])
+  }, [refreshKey, active, localRefresh])
+
+  // Listen for trade events
+  useEffect(() => {
+    const handler = () => setLocalRefresh(k => k + 1)
+    window.addEventListener("pulse-trade", handler)
+    return () => window.removeEventListener("pulse-trade", handler)
+  }, [])
 
   const level = data?.level_info?.current || { name: "Наблюдатель", icon: "👁️", level: 1 }
   const xp = data?.xp || 0

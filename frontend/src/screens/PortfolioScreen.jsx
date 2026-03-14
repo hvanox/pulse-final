@@ -31,7 +31,7 @@ export default function PortfolioScreen({ onRefresh }) {
           const msg = tradeAction === "buy"
             ? `Куплено ${tradeShares} акций ${selectedStock.name} за ${res.total?.toLocaleString("ru-RU")} ₽`
             : `Продано ${tradeShares} акций ${selectedStock.name} за ${res.total?.toLocaleString("ru-RU")} ₽`
-          setTradeMsg({ type: "success", text: msg }); setSelectedStock(null); setTradeShares(1); refresh(); onRefresh?.()
+          setTradeMsg({ type: "success", text: msg }); setSelectedStock(null); setTradeShares(1); refresh(); onRefresh?.(); window.dispatchEvent(new Event("pulse-trade"))
         } else { setTradeMsg({ type: "error", text: res.error }) }
       })
       .catch(e => setTradeMsg({ type: "error", text: e.message||"Ошибка сделки" }))
