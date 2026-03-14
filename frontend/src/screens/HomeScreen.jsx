@@ -9,7 +9,7 @@ export default function HomeScreen({ onStartLesson, onNavigate }) {
   useEffect(() => { load() }, [])
 
   if (loading) return <div style={s.loading}>Загрузка...</div>
-  if (error || !data) return <div style={s.loading}><div style={{fontSize:48,marginBottom:16}}>⚠️</div><div style={{marginBottom:16}}>{error||"Ошибка"}</div><button onClick={load} style={{padding:"10px 24px",borderRadius:10,border:"1px solid rgba(255,255,255,0.15)",background:"transparent",color:"#FFD600",cursor:"pointer",fontFamily:"inherit"}}>Повторить</button></div>
+  if (error || !data) return <div style={s.loading}><div style={{fontSize:48,marginBottom:16}}>⚠️</div><div style={{marginBottom:16}}>{error||"Ошибка"}</div><button onClick={load} style={{padding:"10px 24px",borderRadius:10,border:"1px solid rgba(255,255,255,0.15)",background:"transparent",color:"#b8860b",cursor:"pointer",fontFamily:"inherit"}}>Повторить</button></div>
 
   const { portfolio, next_lesson, daily_missions, market_event, module_progress, stats } = data
 
@@ -25,7 +25,7 @@ export default function HomeScreen({ onStartLesson, onNavigate }) {
             </div>
             <div style={{
               ...s.portfolioPnl,
-              color: (portfolio?.total_pnl || 0) >= 0 ? "#4caf50" : "#ef5350"
+              color: (portfolio?.total_pnl || 0) >= 0 ? "#21a038" : "#f44336"
             }}>
               {(portfolio?.total_pnl || 0) >= 0 ? "+" : ""}
               {(portfolio?.total_pnl || 0).toLocaleString("ru-RU", { maximumFractionDigits: 0 })} ₽
@@ -65,13 +65,13 @@ export default function HomeScreen({ onStartLesson, onNavigate }) {
               <div key={i} style={s.missionItem}>
                 <span style={{ fontSize: 16 }}>{m.completed ? "✅" : "⬜"}</span>
                 <span style={{
-                  flex: 1, fontSize: 13, color: "#e8eaed",
+                  flex: 1, fontSize: 13, color: "#1a1a1a",
                   textDecoration: m.completed ? "line-through" : "none",
                   opacity: m.completed ? 0.5 : 1,
                 }}>
                   {m.icon} {m.text}
                 </span>
-                <span style={{ fontSize: 11, color: "#FFD600", fontWeight: 600 }}>+{m.xp}</span>
+                <span style={{ fontSize: 11, color: "#b8860b", fontWeight: 600 }}>+{m.xp}</span>
               </div>
             ))}
           </div>
@@ -84,24 +84,24 @@ export default function HomeScreen({ onStartLesson, onNavigate }) {
       {/* Market Event */}
       {market_event && !market_event.seen && (
         <div style={s.eventCard}>
-          <div style={{ fontSize: 11, color: "#FFD600", fontWeight: 700, letterSpacing: 1, marginBottom: 8 }}>
+          <div style={{ fontSize: 11, color: "#b8860b", fontWeight: 700, letterSpacing: 1, marginBottom: 8 }}>
             📰 РЫНОЧНОЕ СОБЫТИЕ
           </div>
-          <div style={{ fontSize: 18, fontWeight: 700, color: "#fff", marginBottom: 6 }}>
+          <div style={{ fontSize: 18, fontWeight: 700, color: "#1a1a1a", marginBottom: 6 }}>
             {market_event.headline}
           </div>
-          <div style={{ fontSize: 13, color: "rgba(255,255,255,0.6)", marginBottom: 12, lineHeight: 1.5 }}>
+          <div style={{ fontSize: 13, color: "rgba(0,0,0,0.5)", marginBottom: 12, lineHeight: 1.5 }}>
             {market_event.detail}
           </div>
           {Object.keys(market_event.affected_holdings || {}).length > 0 && (
             <div style={{ marginBottom: 12 }}>
               {Object.entries(market_event.affected_holdings).map(([ticker, info]) => (
-                <div key={ticker} style={{ display: "flex", gap: 12, fontSize: 14, padding: "4px 0", color: "#e8eaed" }}>
+                <div key={ticker} style={{ display: "flex", gap: 12, fontSize: 14, padding: "4px 0", color: "#1a1a1a" }}>
                   <span>{info.name}</span>
-                  <span style={{ color: info.impact_pct >= 0 ? "#4caf50" : "#ef5350", fontWeight: 700 }}>
+                  <span style={{ color: info.impact_pct >= 0 ? "#21a038" : "#f44336", fontWeight: 700 }}>
                     {info.impact_pct >= 0 ? "+" : ""}{info.impact_pct}%
                   </span>
-                  <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 12 }}>
+                  <span style={{ color: "rgba(0,0,0,0.45)", fontSize: 12 }}>
                     ({info.impact_amount >= 0 ? "+" : ""}{info.impact_amount?.toLocaleString("ru-RU")} ₽)
                   </span>
                 </div>
@@ -117,7 +117,7 @@ export default function HomeScreen({ onStartLesson, onNavigate }) {
                 flex: 1, padding: "10px 0", border: "1px solid rgba(255,255,255,0.1)",
                 borderRadius: 8, background: "transparent", fontSize: 13, cursor: "pointer",
                 fontFamily: "inherit", transition: "all 0.2s",
-                color: i === 1 ? "#ef5350" : i === 2 ? "#4caf50" : "rgba(255,255,255,0.7)",
+                color: i === 1 ? "#f44336" : i === 2 ? "#21a038" : "rgba(255,255,255,0.7)",
                 borderColor: i === 1 ? "rgba(239,83,80,0.3)" : i === 2 ? "rgba(76,175,80,0.3)" : "rgba(255,255,255,0.1)",
               }}>{label}</button>
             ))}
@@ -133,17 +133,17 @@ export default function HomeScreen({ onStartLesson, onNavigate }) {
             <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <span style={{ fontSize: 20, width: 28, textAlign: "center" }}>{m.locked ? "🔒" : m.icon}</span>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: "#e8eaed", marginBottom: 4 }}>{m.title}</div>
-                <div style={{ height: 6, background: "rgba(255,255,255,0.08)", borderRadius: 3, overflow: "hidden" }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: "#1a1a1a", marginBottom: 4 }}>{m.title}</div>
+                <div style={{ height: 6, background: "rgba(0,0,0,0.06)", borderRadius: 3, overflow: "hidden" }}>
                   <div style={{
                     height: "100%", width: `${m.progress_pct}%`,
-                    background: "linear-gradient(90deg, #FFD600, #FFA000)",
+                    background: "linear-gradient(90deg, #ffdd2d, #ffa000)",
                     borderRadius: 3, transition: "width 0.5s",
                     opacity: m.locked ? 0.3 : 1,
                   }} />
                 </div>
               </div>
-              <span style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", width: 36, textAlign: "right" }}>
+              <span style={{ fontSize: 12, color: "rgba(0,0,0,0.4)", width: 36, textAlign: "right" }}>
                 {m.locked ? "" : `${m.progress_pct}%`}
               </span>
             </div>
@@ -161,8 +161,8 @@ export default function HomeScreen({ onStartLesson, onNavigate }) {
         ].map((st, i) => (
           <div key={i} style={s.statCard}>
             <div style={{ fontSize: 24, marginBottom: 4 }}>{st.emoji}</div>
-            <div style={{ fontSize: 20, fontWeight: 700, color: "#fff", marginBottom: 2 }}>{st.num}</div>
-            <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)" }}>{st.label}</div>
+            <div style={{ fontSize: 20, fontWeight: 700, color: "#1a1a1a", marginBottom: 2 }}>{st.num}</div>
+            <div style={{ fontSize: 11, color: "rgba(0,0,0,0.4)" }}>{st.label}</div>
           </div>
         ))}
       </div>
@@ -172,46 +172,50 @@ export default function HomeScreen({ onStartLesson, onNavigate }) {
 
 const s = {
   page: { maxWidth: 900, margin: "0 auto" },
-  loading: { color: "rgba(255,255,255,0.5)", padding: 40, textAlign: "center", fontSize: 16 },
+  loading: { color: "rgba(0,0,0,0.45)", padding: 40, textAlign: "center", fontSize: 16 },
   portfolioCard: {
-    background: "linear-gradient(135deg, #1a2634, #1e3a5f)",
+    background: "#ffffff",
     borderRadius: 16, padding: "24px 28px", marginBottom: 20,
-    cursor: "pointer", border: "1px solid rgba(255,255,255,0.06)",
+    cursor: "pointer", border: "1px solid rgba(0,0,0,0.08)",
+    boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
   },
   portfolioHeader: { display: "flex", justifyContent: "space-between", alignItems: "center" },
-  portfolioLabel: { fontSize: 11, color: "rgba(255,255,255,0.4)", letterSpacing: 2, marginBottom: 8 },
-  portfolioValue: { fontSize: 32, fontWeight: 800, color: "#fff", marginBottom: 4 },
+  portfolioLabel: { fontSize: 11, color: "rgba(0,0,0,0.4)", letterSpacing: 2, marginBottom: 8, fontWeight: 600 },
+  portfolioValue: { fontSize: 32, fontWeight: 800, color: "#1a1a1a", marginBottom: 4 },
   portfolioPnl: { fontSize: 15, fontWeight: 600 },
   row: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 20 },
   card: {
-    background: "#1a2634", borderRadius: 16, padding: "20px 24px",
-    border: "1px solid rgba(255,255,255,0.06)", marginBottom: 20,
+    background: "#ffffff", borderRadius: 16, padding: "20px 24px",
+    border: "1px solid rgba(0,0,0,0.08)", marginBottom: 20,
+    boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
   },
-  cardLabel: { fontSize: 11, color: "rgba(255,255,255,0.4)", letterSpacing: 2, marginBottom: 12 },
-  lessonModule: { fontSize: 12, color: "rgba(255,255,255,0.5)", marginBottom: 6 },
-  lessonTitle: { fontSize: 18, fontWeight: 700, color: "#fff", marginBottom: 4 },
-  lessonSub: { fontSize: 13, color: "rgba(255,255,255,0.5)", marginBottom: 12 },
-  lessonMeta: { display: "flex", gap: 16, fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 16 },
+  cardLabel: { fontSize: 11, color: "rgba(0,0,0,0.4)", letterSpacing: 2, marginBottom: 12, fontWeight: 600 },
+  lessonModule: { fontSize: 12, color: "rgba(0,0,0,0.5)", marginBottom: 6 },
+  lessonTitle: { fontSize: 18, fontWeight: 700, color: "#1a1a1a", marginBottom: 4 },
+  lessonSub: { fontSize: 13, color: "rgba(0,0,0,0.5)", marginBottom: 12 },
+  lessonMeta: { display: "flex", gap: 16, fontSize: 12, color: "rgba(0,0,0,0.4)", marginBottom: 16 },
   startBtn: {
     width: "100%", padding: "12px 0", border: "none", borderRadius: 10,
-    background: "#FFD600", color: "#000", fontSize: 15, fontWeight: 700,
+    background: "#ffdd2d", color: "#1a1a1a", fontSize: 15, fontWeight: 700,
     cursor: "pointer", fontFamily: "inherit",
   },
-  allDone: { textAlign: "center", padding: "20px 0", color: "rgba(255,255,255,0.6)", fontSize: 14 },
+  allDone: { textAlign: "center", padding: "20px 0", color: "rgba(0,0,0,0.5)", fontSize: 14 },
   missionsList: { display: "flex", flexDirection: "column", gap: 10 },
   missionItem: { display: "flex", alignItems: "center", gap: 8 },
   bonusBanner: {
-    marginTop: 12, padding: "8px 12px", background: "rgba(255,214,0,0.1)",
-    borderRadius: 8, color: "#FFD600", fontSize: 12, fontWeight: 600, textAlign: "center",
+    marginTop: 12, padding: "8px 12px", background: "rgba(255,221,45,0.15)",
+    borderRadius: 8, color: "#b8860b", fontSize: 12, fontWeight: 600, textAlign: "center",
   },
   eventCard: {
-    background: "linear-gradient(135deg, #1a2634, #2a1a34)",
+    background: "#ffffff",
     borderRadius: 16, padding: "20px 24px", marginBottom: 20,
-    border: "1px solid rgba(255,255,255,0.08)",
+    border: "1px solid rgba(0,0,0,0.08)",
+    boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
   },
   statsRow: { display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 },
   statCard: {
-    background: "#1a2634", borderRadius: 12, padding: "16px 12px",
-    textAlign: "center", border: "1px solid rgba(255,255,255,0.06)",
+    background: "#ffffff", borderRadius: 12, padding: "16px 12px",
+    textAlign: "center", border: "1px solid rgba(0,0,0,0.08)",
+    boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
   },
 }

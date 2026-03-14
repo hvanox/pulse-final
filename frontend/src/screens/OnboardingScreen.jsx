@@ -99,10 +99,10 @@ export default function OnboardingScreen({ onComplete, userName, onLogout }) {
 
   // ─── LOADING / ERROR ───
   if (loadingQuestions) {
-    return (<div style={s.page}>{accountBadge}<div style={s.loadingCard}><div style={{ fontSize: 48, marginBottom: 16 }}>📝</div><div style={{ fontSize: 18, fontWeight: 700, color: "#fff" }}>Загрузка вопросов...</div></div></div>)
+    return (<div style={s.page}>{accountBadge}<div style={s.loadingCard}><div style={{ fontSize: 48, marginBottom: 16 }}>📝</div><div style={{ fontSize: 18, fontWeight: 700, color: "#1a1a1a" }}>Загрузка вопросов...</div></div></div>)
   }
   if (error) {
-    return (<div style={s.page}>{accountBadge}<div style={s.loadingCard}><div style={{ fontSize: 48, marginBottom: 16 }}>⚠️</div><div style={{ fontSize: 18, fontWeight: 700, color: "#fff", marginBottom: 16 }}>{error}</div><button style={s.startBtn} onClick={fetchQuestions}>Попробовать снова</button></div></div>)
+    return (<div style={s.page}>{accountBadge}<div style={s.loadingCard}><div style={{ fontSize: 48, marginBottom: 16 }}>⚠️</div><div style={{ fontSize: 18, fontWeight: 700, color: "#1a1a1a", marginBottom: 16 }}>{error}</div><button style={s.startBtn} onClick={fetchQuestions}>Попробовать снова</button></div></div>)
   }
 
   // ─── WELCOME SCREEN ───
@@ -159,8 +159,8 @@ export default function OnboardingScreen({ onComplete, userName, onLogout }) {
           {/* Level Badge */}
           <div style={{
             ...s.levelBadge,
-            background: `linear-gradient(135deg, ${level.color || "#4caf50"}22, ${level.color || "#4caf50"}11)`,
-            borderColor: `${level.color || "#4caf50"}44`,
+            background: `linear-gradient(135deg, ${level.color || "#21a038"}22, ${level.color || "#21a038"}11)`,
+            borderColor: `${level.color || "#21a038"}44`,
           }}>
             <div style={s.levelIcon}>{level.icon}</div>
             <div style={s.levelName}>{level.name_full || level.name}</div>
@@ -187,12 +187,12 @@ export default function OnboardingScreen({ onComplete, userName, onLogout }) {
                   <div style={{
                     ...s.topicFill,
                     width: `${Math.max(data.score * 100, 5)}%`,
-                    background: data.score >= 0.7 ? "#4caf50" : data.score >= 0.4 ? "#FFD600" : "#ef5350",
+                    background: data.score >= 0.7 ? "#21a038" : data.score >= 0.4 ? "#FFD600" : "#f44336",
                   }} />
                 </div>
                 <span style={{
                   ...s.topicPct,
-                  color: data.score >= 0.7 ? "#4caf50" : data.score >= 0.4 ? "#FFD600" : "#ef5350",
+                  color: data.score >= 0.7 ? "#21a038" : data.score >= 0.4 ? "#FFD600" : "#f44336",
                 }}>
                   {Math.round(data.score * 100)}%
                 </span>
@@ -232,7 +232,7 @@ export default function OnboardingScreen({ onComplete, userName, onLogout }) {
                 <div key={i} style={s.planStep}>
                   <div style={{
                     ...s.planDot,
-                    background: step.priority === "high" ? "#FFD600" : step.priority === "focus" ? "#ef5350" : "rgba(255,255,255,0.2)",
+                    background: step.priority === "high" ? "#FFD600" : step.priority === "focus" ? "#f44336" : "rgba(255,255,255,0.2)",
                   }}>
                     {i + 1}
                   </div>
@@ -267,7 +267,7 @@ export default function OnboardingScreen({ onComplete, userName, onLogout }) {
       <div style={s.page}>
         <div style={s.loadingCard}>
           <div style={{ fontSize: 48, marginBottom: 16 }}>🧠</div>
-          <div style={{ fontSize: 18, fontWeight: 700, color: "#fff", marginBottom: 8 }}>Анализируем ответы...</div>
+          <div style={{ fontSize: 18, fontWeight: 700, color: "#1a1a1a", marginBottom: 8 }}>Анализируем ответы...</div>
           <div style={{ fontSize: 13, color: "rgba(255,255,255,0.5)" }}>Составляем персональный план</div>
         </div>
       </div>
@@ -349,52 +349,53 @@ const s = {
     alignItems: "center",
     justifyContent: "center",
     padding: "20px",
-    background: "#0f1923",
+    background: "#f6f7f8",
     fontFamily: "Inter, sans-serif",
-    color: "#e8eaed",
+    color: "#1a1a1a",
   },
   // ─── Welcome ───
   welcomeCard: {
-    background: "#1a2634",
+    background: "#ffffff",
     borderRadius: 24,
     padding: "48px 36px",
     maxWidth: 480,
     width: "100%",
     textAlign: "center",
-    border: "1px solid rgba(255,255,255,0.06)",
+    border: "1px solid rgba(0,0,0,0.08)",
+    boxShadow: "0 2px 12px rgba(0,0,0,0.08)",
   },
   questBadge: {
     display: "inline-block",
     padding: "6px 16px",
-    background: "rgba(255,214,0,0.1)",
+    background: "rgba(255,221,45,0.15)",
     borderRadius: 20,
-    color: "#FFD600",
+    color: "#b8860b",
     fontSize: 11,
     fontWeight: 700,
     letterSpacing: 2,
     marginBottom: 20,
   },
   welcomeIcon: { fontSize: 56, marginBottom: 16 },
-  welcomeTitle: { fontSize: 28, fontWeight: 800, color: "#fff", marginBottom: 12 },
+  welcomeTitle: { fontSize: 28, fontWeight: 800, color: "#1a1a1a", marginBottom: 12 },
   welcomeText: {
-    fontSize: 15, color: "rgba(255,255,255,0.6)", lineHeight: 1.7,
+    fontSize: 15, color: "rgba(0,0,0,0.55)", lineHeight: 1.7,
     marginBottom: 28, whiteSpace: "pre-line",
   },
   welcomeFeatures: { display: "flex", flexDirection: "column", gap: 12, marginBottom: 32 },
   welcomeFeature: {
     display: "flex", alignItems: "center", gap: 12,
-    padding: "10px 16px", background: "rgba(255,255,255,0.03)",
+    padding: "10px 16px", background: "#f6f7f8",
     borderRadius: 10, textAlign: "left",
   },
-  welcomeFeatureText: { fontSize: 14, color: "#e8eaed" },
+  welcomeFeatureText: { fontSize: 14, color: "#1a1a1a" },
   startBtn: {
     width: "100%", padding: "16px 0", border: "none", borderRadius: 14,
-    background: "#FFD600", color: "#000", fontSize: 16, fontWeight: 700,
+    background: "#ffdd2d", color: "#1a1a1a", fontSize: 16, fontWeight: 700,
     cursor: "pointer", fontFamily: "inherit", marginBottom: 12,
     transition: "all 0.2s",
   },
   skipBtn: {
-    background: "transparent", border: "none", color: "rgba(255,255,255,0.3)",
+    background: "transparent", border: "none", color: "rgba(0,0,0,0.35)",
     fontSize: 13, cursor: "pointer", fontFamily: "inherit", padding: "8px 0",
   },
   // ─── Quiz ───
@@ -403,64 +404,65 @@ const s = {
     display: "flex", alignItems: "center", gap: 12,
     marginBottom: 20,
   },
-  questLabel: { fontSize: 13, color: "rgba(255,255,255,0.5)", flexShrink: 0 },
+  questLabel: { fontSize: 13, color: "rgba(0,0,0,0.45)", flexShrink: 0 },
   progressBar: {
-    flex: 1, height: 6, background: "rgba(255,255,255,0.08)",
+    flex: 1, height: 6, background: "rgba(0,0,0,0.06)",
     borderRadius: 3, overflow: "hidden",
   },
   progressFill: {
-    height: "100%", background: "linear-gradient(90deg, #FFD600, #FFA000)",
+    height: "100%", background: "linear-gradient(90deg, #ffdd2d, #ffa000)",
     borderRadius: 3, transition: "width 0.4s ease",
   },
   diffBadge: {
     fontSize: 10, padding: "3px 10px", borderRadius: 6,
-    background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.4)",
+    background: "rgba(0,0,0,0.04)", color: "rgba(0,0,0,0.45)",
     fontWeight: 600, flexShrink: 0,
   },
   quizCard: {
-    background: "#1a2634", borderRadius: 20, padding: "32px 28px",
+    background: "#ffffff", borderRadius: 20, padding: "32px 28px",
     maxWidth: 620, width: "100%",
-    border: "1px solid rgba(255,255,255,0.06)",
+    border: "1px solid rgba(0,0,0,0.08)",
+    boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
   },
   scenario: {
-    fontSize: 15, color: "rgba(255,255,255,0.7)", lineHeight: 1.7,
-    marginBottom: 16, padding: "16px", background: "rgba(255,255,255,0.03)",
-    borderRadius: 12, borderLeft: "3px solid #FFD600", whiteSpace: "pre-line",
+    fontSize: 15, color: "rgba(0,0,0,0.65)", lineHeight: 1.7,
+    marginBottom: 16, padding: "16px", background: "#f6f7f8",
+    borderRadius: 12, borderLeft: "3px solid #ffdd2d", whiteSpace: "pre-line",
   },
   question: {
-    fontSize: 18, fontWeight: 700, color: "#fff", marginBottom: 20, lineHeight: 1.5,
+    fontSize: 18, fontWeight: 700, color: "#1a1a1a", marginBottom: 20, lineHeight: 1.5,
   },
   options: { display: "flex", flexDirection: "column", gap: 8, marginBottom: 20 },
   optionBtn: {
     width: "100%", padding: "14px 16px",
-    border: "1px solid rgba(255,255,255,0.08)",
-    borderRadius: 12, background: "rgba(255,255,255,0.03)",
-    color: "#e8eaed", fontSize: 14, cursor: "pointer",
+    border: "1px solid rgba(0,0,0,0.1)",
+    borderRadius: 12, background: "#ffffff",
+    color: "#1a1a1a", fontSize: 14, cursor: "pointer",
     textAlign: "left", fontFamily: "inherit",
     display: "flex", alignItems: "center", gap: 12,
     transition: "all 0.2s",
   },
   optionSelected: {
-    borderColor: "#FFD600", background: "rgba(255,214,0,0.08)",
+    borderColor: "#ffdd2d", background: "rgba(255,221,45,0.1)",
   },
   optionRevealed: {
-    borderColor: "rgba(255,255,255,0.15)", opacity: 0.8,
+    borderColor: "rgba(0,0,0,0.12)", opacity: 0.8,
   },
   optionLetter: {
     width: 28, height: 28, borderRadius: "50%",
-    background: "rgba(255,255,255,0.06)",
+    background: "rgba(0,0,0,0.05)",
     display: "flex", alignItems: "center", justifyContent: "center",
     fontSize: 12, fontWeight: 700, flexShrink: 0,
   },
   optionText: { flex: 1, lineHeight: 1.5 },
   confirmBtn: {
     width: "100%", padding: "14px 0", border: "none", borderRadius: 12,
-    background: "#FFD600", color: "#000", fontSize: 15, fontWeight: 700,
+    background: "#ffdd2d", color: "#1a1a1a", fontSize: 15, fontWeight: 700,
     cursor: "pointer", fontFamily: "inherit",
   },
   nextBtn: {
     width: "100%", padding: "14px 0", border: "none", borderRadius: 12,
-    background: "rgba(255,214,0,0.15)", color: "#FFD600", fontSize: 15, fontWeight: 700,
+    background: "rgba(255,221,45,0.2)", color: "#b8860b", fontSize: 15, fontWeight: 700,
     cursor: "pointer", fontFamily: "inherit",
   },
   // ─── Loading ───
@@ -475,9 +477,10 @@ const s = {
     zIndex: 1000,
   },
   resultCard: {
-    background: "#1a2634", borderRadius: 24, padding: "36px 28px",
+    background: "#ffffff", borderRadius: 24, padding: "36px 28px",
     maxWidth: 560, width: "100%",
-    border: "1px solid rgba(255,255,255,0.06)",
+    border: "1px solid rgba(0,0,0,0.08)",
+    boxShadow: "0 2px 12px rgba(0,0,0,0.08)",
     maxHeight: "90vh", overflowY: "auto",
   },
   levelBadge: {
@@ -485,31 +488,31 @@ const s = {
     border: "1px solid", textAlign: "center", marginBottom: 24,
   },
   levelIcon: { fontSize: 48, marginBottom: 8 },
-  levelName: { fontSize: 22, fontWeight: 800, color: "#fff", marginBottom: 6 },
-  levelDesc: { fontSize: 13, color: "rgba(255,255,255,0.6)", lineHeight: 1.6 },
+  levelName: { fontSize: 22, fontWeight: 800, color: "#1a1a1a", marginBottom: 6 },
+  levelDesc: { fontSize: 13, color: "rgba(0,0,0,0.55)", lineHeight: 1.6 },
   // Score
   scoreSection: { textAlign: "center", marginBottom: 24 },
   scoreCircle: {
     width: 80, height: 80, borderRadius: "50%",
-    border: "3px solid #FFD600",
+    border: "3px solid #ffdd2d",
     display: "inline-flex", flexDirection: "column",
     alignItems: "center", justifyContent: "center",
     marginBottom: 8,
   },
-  scoreNum: { fontSize: 28, fontWeight: 800, color: "#FFD600" },
-  scoreOf: { fontSize: 11, color: "rgba(255,255,255,0.4)" },
-  scorePct: { fontSize: 14, color: "rgba(255,255,255,0.5)" },
+  scoreNum: { fontSize: 28, fontWeight: 800, color: "#b8860b" },
+  scoreOf: { fontSize: 11, color: "rgba(0,0,0,0.4)" },
+  scorePct: { fontSize: 14, color: "rgba(0,0,0,0.5)" },
   // Topics
   topicSection: { marginBottom: 24 },
   sectionLabel: {
-    fontSize: 11, color: "rgba(255,255,255,0.4)",
+    fontSize: 11, color: "rgba(0,0,0,0.4)",
     letterSpacing: 2, marginBottom: 12, fontWeight: 700,
   },
   topicRow: { display: "flex", alignItems: "center", gap: 8, marginBottom: 8 },
   topicIcon: { fontSize: 16, width: 24, textAlign: "center" },
-  topicName: { fontSize: 12, color: "rgba(255,255,255,0.6)", width: 100, flexShrink: 0 },
+  topicName: { fontSize: 12, color: "rgba(0,0,0,0.55)", width: 100, flexShrink: 0 },
   topicBar: {
-    flex: 1, height: 6, background: "rgba(255,255,255,0.06)",
+    flex: 1, height: 6, background: "rgba(0,0,0,0.06)",
     borderRadius: 3, overflow: "hidden",
   },
   topicFill: { height: "100%", borderRadius: 3, transition: "width 0.5s" },
@@ -517,31 +520,31 @@ const s = {
   // Strong / Weak
   swRow: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 24 },
   swCard: {
-    padding: "14px", background: "rgba(255,255,255,0.03)",
-    borderRadius: 12, border: "1px solid rgba(255,255,255,0.04)",
+    padding: "14px", background: "#f6f7f8",
+    borderRadius: 12, border: "1px solid rgba(0,0,0,0.06)",
   },
-  swTitle: { fontSize: 13, fontWeight: 700, color: "#e8eaed", marginBottom: 8 },
-  swItem: { fontSize: 12, color: "rgba(255,255,255,0.5)", padding: "3px 0", display: "flex", gap: 6 },
+  swTitle: { fontSize: 13, fontWeight: 700, color: "#1a1a1a", marginBottom: 8 },
+  swItem: { fontSize: 12, color: "rgba(0,0,0,0.55)", padding: "3px 0", display: "flex", gap: 6 },
   // Plan
   planSection: { marginBottom: 24 },
   planStep: { display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 12 },
   planDot: {
     width: 28, height: 28, borderRadius: "50%",
     display: "flex", alignItems: "center", justifyContent: "center",
-    fontSize: 12, fontWeight: 700, color: "#000", flexShrink: 0,
+    fontSize: 12, fontWeight: 700, color: "#1a1a1a", flexShrink: 0,
   },
   planInfo: { flex: 1 },
-  planAction: { fontSize: 14, fontWeight: 600, color: "#e8eaed", marginBottom: 2 },
-  planReason: { fontSize: 12, color: "rgba(255,255,255,0.4)" },
+  planAction: { fontSize: 14, fontWeight: 600, color: "#1a1a1a", marginBottom: 2 },
+  planReason: { fontSize: 12, color: "rgba(0,0,0,0.4)" },
   focusBadge: {
     fontSize: 10, padding: "2px 8px", borderRadius: 4,
-    background: "rgba(239,83,80,0.15)", color: "#ef5350",
+    background: "rgba(244,67,54,0.08)", color: "#f44336",
     fontWeight: 700, flexShrink: 0,
   },
   // XP
   xpBonus: {
-    padding: "12px 16px", background: "rgba(255,214,0,0.1)",
-    borderRadius: 10, color: "#FFD600", fontSize: 14, fontWeight: 700,
+    padding: "12px 16px", background: "rgba(255,221,45,0.15)",
+    borderRadius: 10, color: "#b8860b", fontSize: 14, fontWeight: 700,
     textAlign: "center", marginBottom: 20,
   },
   // ─── Account badge (bottom-left) ───
@@ -553,17 +556,18 @@ const s = {
     alignItems: "center",
     gap: 10,
     padding: "10px 14px",
-    background: "#1a2634",
+    background: "#ffffff",
     borderRadius: 12,
-    border: "1px solid rgba(255,255,255,0.06)",
+    border: "1px solid rgba(0,0,0,0.08)",
+    boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
     zIndex: 50,
   },
   accountAvatar: {
     width: 32,
     height: 32,
     borderRadius: "50%",
-    background: "#FFD600",
-    color: "#000",
+    background: "#ffdd2d",
+    color: "#1a1a1a",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -577,24 +581,24 @@ const s = {
   accountName: {
     fontSize: 12,
     fontWeight: 600,
-    color: "#fff",
+    color: "#1a1a1a",
     whiteSpace: "nowrap",
     overflow: "hidden",
     textOverflow: "ellipsis",
   },
   accountEmail: {
     fontSize: 10,
-    color: "rgba(255,255,255,0.35)",
+    color: "rgba(0,0,0,0.4)",
     whiteSpace: "nowrap",
     overflow: "hidden",
     textOverflow: "ellipsis",
   },
   accountLogout: {
     padding: "4px 10px",
-    border: "1px solid rgba(255,255,255,0.1)",
+    border: "1px solid rgba(0,0,0,0.1)",
     borderRadius: 6,
     background: "transparent",
-    color: "rgba(255,255,255,0.4)",
+    color: "rgba(0,0,0,0.45)",
     fontSize: 11,
     cursor: "pointer",
     fontFamily: "inherit",

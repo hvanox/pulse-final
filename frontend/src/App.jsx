@@ -154,24 +154,24 @@ export default function App() {
 const s = {
   fullPage: {
     minHeight: "100vh",
-    background: "#0f1923",
+    background: "#f6f7f8",
     fontFamily: "Inter, sans-serif",
   },
   center: {
     minHeight: "100vh",
-    background: "#0f1923",
+    background: "#f6f7f8",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     fontFamily: "Inter, sans-serif",
-    color: "rgba(255,255,255,0.5)",
+    color: "rgba(0,0,0,0.45)",
   },
   layout: {
     display: "flex",
     minHeight: "100vh",
-    background: "#0f1923",
+    background: "#f6f7f8",
     fontFamily: "Inter, sans-serif",
-    color: "#e8eaed",
+    color: "#1a1a1a",
   },
   main: {
     flex: 1,

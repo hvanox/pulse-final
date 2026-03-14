@@ -16,33 +16,31 @@ export default function Sidebar({ active, onNavigate, userName, onLogout, refres
   const portfolioPnl = data?.portfolio?.total_pnl_pct || 0
 
   const tabs = [
-    { id: "home", label: "Главная", icon: "🏠" },
-    { id: "portfolio", label: "Портфель", icon: "📈" },
-    { id: "learn", label: "Обучение", icon: "📚" },
-    { id: "achievements", label: "Достижения", icon: "🏆" },
-    { id: "settings", label: "Настройки", icon: "⚙️" },
+    { id: "home", label: "Главная", icon: "/icons/free-icon-home-6529015.png" },
+    { id: "portfolio", label: "Портфель", icon: "/icons/free-icon-graphic-progression-69856.png" },
+    { id: "learn", label: "Обучение", icon: "/icons/free-icon-star-11465609.png" },
+    { id: "achievements", label: "Достижения", icon: "/icons/free-icon-checkmark-16703458.png" },
+    { id: "settings", label: "Настройки", icon: "/icons/free-icon-setting-6619132.png" },
   ]
 
   return (
     <div style={s.sidebar}>
       {/* Logo */}
       <div style={s.logo}>
-        <span style={s.logoIcon}>💹</span>
-        <span style={s.logoText}>PULSE</span>
-        <span style={s.version}>2.0</span>
+        <img src="/icons/T-Bank_RU_logo.svg.png" alt="T-Bank" style={s.logoImg} />
       </div>
 
       <div style={s.divider} />
 
       {/* Portfolio Summary */}
       <div style={s.portfolioBox} onClick={() => onNavigate("portfolio")}>
-        <div style={s.portfolioLabel}>Портфель</div>
+        <div style={s.portfolioLabel}>ПОРТФЕЛЬ</div>
         <div style={s.portfolioValue}>
           {portfolioValue.toLocaleString("ru-RU", { maximumFractionDigits: 0 })} ₽
         </div>
         <div style={{
           ...s.portfolioPnl,
-          color: portfolioPnl >= 0 ? "#4caf50" : "#ef5350"
+          color: portfolioPnl >= 0 ? "#21a038" : "#f44336"
         }}>
           {portfolioPnl >= 0 ? "+" : ""}{portfolioPnl.toFixed(2)}%
           {portfolioPnl >= 0 ? " ↑" : " ↓"}
@@ -62,7 +60,7 @@ export default function Sidebar({ active, onNavigate, userName, onLogout, refres
               ...(active === t.id ? s.navBtnActive : {}),
             }}
           >
-            <span style={s.navIcon}>{t.icon}</span>
+            <img src={t.icon} alt="" style={s.navIconImg} />
             <span>{t.label}</span>
           </button>
         ))}
@@ -85,7 +83,7 @@ export default function Sidebar({ active, onNavigate, userName, onLogout, refres
       {/* Streak */}
       {streak > 0 && (
         <div style={s.streakBox}>
-          <span style={s.streakFire}>🔥</span>
+          <img src="/icons/free-icon-flames-4201705.png" alt="" style={{ width: 20, height: 20 }} />
           <span style={s.streakNum}>{streak}</span>
           <span style={s.streakLabel}>{streak === 1 ? "день" : streak < 5 ? "дня" : "дней"}</span>
         </div>
@@ -113,8 +111,8 @@ const s = {
     top: 0,
     bottom: 0,
     width: 260,
-    background: "#141e2b",
-    borderRight: "1px solid rgba(255,255,255,0.06)",
+    background: "#ffffff",
+    borderRight: "1px solid rgba(0,0,0,0.08)",
     display: "flex",
     flexDirection: "column",
     padding: "20px 16px",
@@ -128,29 +126,17 @@ const s = {
     padding: "4px 8px",
     marginBottom: 4,
   },
-  logoIcon: { fontSize: 28 },
-  logoText: {
-    fontSize: 22,
-    fontWeight: 800,
-    color: "#fff",
-    letterSpacing: 2,
-  },
-  version: {
-    fontSize: 11,
-    fontWeight: 700,
-    color: "#FFD600",
-    background: "rgba(255,214,0,0.15)",
-    padding: "2px 6px",
-    borderRadius: 6,
-    marginLeft: 4,
+  logoImg: {
+    height: 32,
+    objectFit: "contain",
   },
   divider: {
     height: 1,
-    background: "rgba(255,255,255,0.06)",
+    background: "rgba(0,0,0,0.06)",
     margin: "12px 0",
   },
   portfolioBox: {
-    background: "rgba(255,255,255,0.04)",
+    background: "#f6f7f8",
     borderRadius: 12,
     padding: "12px 14px",
     cursor: "pointer",
@@ -158,15 +144,16 @@ const s = {
   },
   portfolioLabel: {
     fontSize: 11,
-    color: "rgba(255,255,255,0.5)",
+    color: "rgba(0,0,0,0.45)",
     textTransform: "uppercase",
     letterSpacing: 1,
     marginBottom: 4,
+    fontWeight: 600,
   },
   portfolioValue: {
     fontSize: 20,
     fontWeight: 700,
-    color: "#fff",
+    color: "#1a1a1a",
   },
   portfolioPnl: {
     fontSize: 13,
@@ -186,7 +173,7 @@ const s = {
     border: "none",
     borderRadius: 10,
     background: "transparent",
-    color: "rgba(255,255,255,0.6)",
+    color: "rgba(0,0,0,0.55)",
     fontSize: 14,
     fontWeight: 500,
     cursor: "pointer",
@@ -196,14 +183,18 @@ const s = {
     fontFamily: "inherit",
   },
   navBtnActive: {
-    background: "rgba(255,214,0,0.1)",
-    color: "#FFD600",
+    background: "rgba(255,221,45,0.15)",
+    color: "#1a1a1a",
     fontWeight: 600,
   },
-  navIcon: { fontSize: 18 },
+  navIconImg: {
+    width: 22,
+    height: 22,
+    objectFit: "contain",
+  },
   levelBox: {
     padding: "12px 14px",
-    background: "rgba(255,255,255,0.04)",
+    background: "#f6f7f8",
     borderRadius: 12,
     marginBottom: 8,
   },
@@ -217,35 +208,34 @@ const s = {
   levelName: {
     fontSize: 13,
     fontWeight: 600,
-    color: "#fff",
+    color: "#1a1a1a",
   },
   xpBar: {
     height: 6,
-    background: "rgba(255,255,255,0.08)",
+    background: "rgba(0,0,0,0.06)",
     borderRadius: 3,
     overflow: "hidden",
     marginBottom: 4,
   },
   xpFill: {
     height: "100%",
-    background: "linear-gradient(90deg, #FFD600, #FFA000)",
+    background: "linear-gradient(90deg, #ffdd2d, #ffa000)",
     borderRadius: 3,
     transition: "width 0.5s ease",
   },
   xpText: {
     fontSize: 11,
-    color: "rgba(255,255,255,0.4)",
+    color: "rgba(0,0,0,0.4)",
   },
   streakBox: {
     display: "flex",
     alignItems: "center",
     gap: 6,
     padding: "10px 14px",
-    background: "linear-gradient(135deg, rgba(255,152,0,0.15), rgba(255,87,34,0.1))",
+    background: "linear-gradient(135deg, rgba(255,152,0,0.1), rgba(255,87,34,0.06))",
     borderRadius: 12,
     marginTop: 4,
   },
-  streakFire: { fontSize: 20 },
   streakNum: {
     fontSize: 20,
     fontWeight: 800,
@@ -253,7 +243,7 @@ const s = {
   },
   streakLabel: {
     fontSize: 13,
-    color: "rgba(255,255,255,0.5)",
+    color: "rgba(0,0,0,0.45)",
   },
   userBox: {
     display: "flex",
@@ -266,8 +256,8 @@ const s = {
     width: 36,
     height: 36,
     borderRadius: "50%",
-    background: "#FFD600",
-    color: "#000",
+    background: "#ffdd2d",
+    color: "#1a1a1a",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -281,24 +271,24 @@ const s = {
   userName: {
     fontSize: 13,
     fontWeight: 600,
-    color: "#fff",
+    color: "#1a1a1a",
     whiteSpace: "nowrap",
     overflow: "hidden",
     textOverflow: "ellipsis",
   },
   userEmail: {
     fontSize: 11,
-    color: "rgba(255,255,255,0.35)",
+    color: "rgba(0,0,0,0.4)",
     whiteSpace: "nowrap",
     overflow: "hidden",
     textOverflow: "ellipsis",
   },
   logoutBtn: {
     padding: "8px 14px",
-    border: "1px solid rgba(255,255,255,0.08)",
+    border: "1px solid rgba(0,0,0,0.08)",
     borderRadius: 8,
     background: "transparent",
-    color: "rgba(255,255,255,0.4)",
+    color: "rgba(0,0,0,0.45)",
     fontSize: 12,
     cursor: "pointer",
     fontFamily: "inherit",

@@ -78,7 +78,7 @@ export default function CardScreen({ onDone, onBack }) {
             <div style={{ ...s.cardIcon, background: "#e0e0e0", transform: "rotate(-8deg) translate(-6px, 4px)", zIndex: 1 }}>
               <span style={s.qMark}>?</span>
             </div>
-            <div style={{ ...s.cardIcon, background: "#FFD600", zIndex: 2 }}>
+            <div style={{ ...s.cardIcon, background: "#ffdd2d", zIndex: 2 }}>
               <span style={s.qMark}>?</span>
             </div>
           </div>
@@ -101,7 +101,7 @@ export default function CardScreen({ onDone, onBack }) {
 
             let circleStyle = { ...s.circle }
             if (correct) {
-              circleStyle = { ...s.circle, background: "#FFD600", border: "2px solid #FFD600" }
+              circleStyle = { ...s.circle, background: "#ffdd2d", border: "2px solid #ffdd2d" }
             } else if (wrong) {
               circleStyle = { ...s.circle, background: "#ffcccc", border: "2px solid #e53935" }
             }
@@ -182,7 +182,7 @@ const s = {
   correctWrap: { marginTop: 16, display: "flex", flexDirection: "column", gap: 12 },
   correctBanner:{ display: "flex", alignItems: "center", gap: 10, padding: "14px 16px", background: "#e8f5e9", borderRadius: 10 },
   correctText: { fontSize: 15, fontWeight: 600, color: "#2e7d32" },
-  btn:         { width: "100%", padding: "14px 0", fontSize: 15, fontWeight: 600, borderRadius: 12, background: "#FFD600", color: "#1a1a1a", border: "none", cursor: "pointer" },
+  btn:         { width: "100%", padding: "14px 0", fontSize: 15, fontWeight: 600, borderRadius: 12, background: "#ffdd2d", color: "#1a1a1a", border: "none", cursor: "pointer" },
   skeleton:    { pointerEvents: "none" },
   skLine:      { background: "#f0f0f0", borderRadius: 6, animation: "pulse 1.4s ease-in-out infinite" },
   backBtn:     { background: "none", border: "none", color: "#888", fontSize: 14, cursor: "pointer", padding: "0 0 16px", fontFamily: "Inter, sans-serif", fontWeight: 500 },

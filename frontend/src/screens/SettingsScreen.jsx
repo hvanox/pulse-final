@@ -54,21 +54,22 @@ export default function SettingsScreen() {
 
 const s = {
   page: { maxWidth: 500, margin: "0 auto" },
-  title: { fontSize: 28, fontWeight: 800, color: "#fff", marginBottom: 20 },
+  title: { fontSize: 28, fontWeight: 800, color: "#1a1a1a", marginBottom: 20 },
   card: {
-    background: "#1a2634", borderRadius: 16, padding: "20px 24px",
-    border: "1px solid rgba(255,255,255,0.06)", marginBottom: 12,
+    background: "#ffffff", borderRadius: 16, padding: "20px 24px",
+    border: "1px solid rgba(0,0,0,0.08)", marginBottom: 12,
+    boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
   },
   sectionTitle: {
-    fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.4)",
+    fontSize: 11, fontWeight: 700, color: "rgba(0,0,0,0.4)",
     textTransform: "uppercase", letterSpacing: 1, marginBottom: 12,
   },
   toggle: {
     display: "flex", alignItems: "center", justifyContent: "space-between",
-    padding: "10px 0", fontSize: 14, color: "#e8eaed", cursor: "pointer",
-    borderBottom: "1px solid rgba(255,255,255,0.04)",
+    padding: "10px 0", fontSize: 14, color: "#1a1a1a", cursor: "pointer",
+    borderBottom: "1px solid rgba(0,0,0,0.04)",
   },
-  checkbox: { width: 18, height: 18, accentColor: "#FFD600", cursor: "pointer" },
-  about: { fontSize: 13, color: "rgba(255,255,255,0.5)", marginBottom: 8, lineHeight: 1.5 },
-  version: { fontSize: 12, color: "rgba(255,255,255,0.3)" },
+  checkbox: { width: 18, height: 18, accentColor: "#ffdd2d", cursor: "pointer" },
+  about: { fontSize: 13, color: "rgba(0,0,0,0.45)", marginBottom: 8, lineHeight: 1.5 },
+  version: { fontSize: 12, color: "rgba(0,0,0,0.3)" },
 }

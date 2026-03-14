@@ -10,7 +10,7 @@ export default function AchievementsScreen() {
   useEffect(() => { loadAch() }, [])
 
   if (loading) return <div style={s.loading}>Загрузка...</div>
-  if (error) return <div style={s.loading}><div style={{fontSize:48,marginBottom:16}}>⚠️</div><div style={{marginBottom:16}}>{error}</div><button onClick={loadAch} style={{padding:"10px 24px",borderRadius:10,border:"1px solid rgba(255,255,255,0.15)",background:"transparent",color:"#FFD600",cursor:"pointer",fontFamily:"inherit"}}>Повторить</button></div>
+  if (error) return <div style={s.loading}><div style={{fontSize:48,marginBottom:16}}>⚠️</div><div style={{marginBottom:16}}>{error}</div><button onClick={loadAch} style={{padding:"10px 24px",borderRadius:10,border:"1px solid rgba(0,0,0,0.1)",background:"transparent",color:"#ffdd2d",cursor:"pointer",fontFamily:"inherit"}}>Повторить</button></div>
 
   const categories = [
     { id: "all", label: "Все" },
@@ -63,8 +63,8 @@ export default function AchievementsScreen() {
           <div key={ach.id} style={{
             ...s.achCard,
             opacity: ach.unlocked ? 1 : 0.4,
-            background: ach.unlocked ? "rgba(255,214,0,0.05)" : "#1a2634",
-            borderColor: ach.unlocked ? "rgba(255,214,0,0.15)" : "rgba(255,255,255,0.04)",
+            background: ach.unlocked ? "rgba(255,221,45,0.05)" : "#f6f7f8",
+            borderColor: ach.unlocked ? "rgba(255,221,45,0.15)" : "rgba(0,0,0,0.04)",
           }}>
             <div style={s.achIcon}>{ach.unlocked ? ach.icon : "🔒"}</div>
             <div style={s.achName}>{ach.name}</div>
@@ -84,34 +84,35 @@ export default function AchievementsScreen() {
 
 const s = {
   page: { maxWidth: 800, margin: "0 auto" },
-  loading: { color: "rgba(255,255,255,0.5)", padding: 40, textAlign: "center" },
+  loading: { color: "rgba(0,0,0,0.45)", padding: 40, textAlign: "center" },
   header: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 },
-  title: { fontSize: 28, fontWeight: 800, color: "#fff" },
-  counter: { fontSize: 18, fontWeight: 700, color: "#FFD600" },
+  title: { fontSize: 28, fontWeight: 800, color: "#1a1a1a" },
+  counter: { fontSize: 18, fontWeight: 700, color: "#ffdd2d" },
   progressBox: { marginBottom: 20 },
   progressBar: {
-    height: 8, background: "rgba(255,255,255,0.08)", borderRadius: 4, overflow: "hidden", marginBottom: 4,
+    height: 8, background: "rgba(0,0,0,0.06)", borderRadius: 4, overflow: "hidden", marginBottom: 4,
   },
   progressFill: {
-    height: "100%", background: "linear-gradient(90deg, #FFD600, #FFA000)",
+    height: "100%", background: "linear-gradient(90deg, #ffdd2d, #FFA000)",
     borderRadius: 4, transition: "width 0.5s",
   },
-  progressText: { fontSize: 12, color: "rgba(255,255,255,0.4)" },
+  progressText: { fontSize: 12, color: "rgba(0,0,0,0.4)" },
   filters: { display: "flex", gap: 4, marginBottom: 20, flexWrap: "wrap" },
   filterBtn: {
-    padding: "6px 14px", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8,
-    background: "transparent", color: "rgba(255,255,255,0.5)", fontSize: 12,
+    padding: "6px 14px", border: "1px solid rgba(0,0,0,0.06)", borderRadius: 8,
+    background: "transparent", color: "rgba(0,0,0,0.45)", fontSize: 12,
     cursor: "pointer", fontFamily: "inherit",
   },
-  filterActive: { background: "rgba(255,214,0,0.1)", color: "#FFD600", borderColor: "rgba(255,214,0,0.2)" },
+  filterActive: { background: "rgba(255,221,45,0.1)", color: "#ffdd2d", borderColor: "rgba(255,221,45,0.2)" },
   grid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 12 },
   achCard: {
     borderRadius: 14, padding: "20px 16px", textAlign: "center",
-    border: "1px solid rgba(255,255,255,0.04)", transition: "all 0.2s",
+    border: "1px solid rgba(0,0,0,0.04)", transition: "all 0.2s",
+    boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
   },
   achIcon: { fontSize: 36, marginBottom: 8 },
-  achName: { fontSize: 14, fontWeight: 700, color: "#e8eaed", marginBottom: 4 },
-  achDesc: { fontSize: 11, color: "rgba(255,255,255,0.4)", marginBottom: 8, lineHeight: 1.4 },
-  achDate: { fontSize: 10, color: "rgba(255,255,255,0.3)", marginBottom: 4 },
-  achXp: { fontSize: 11, color: "#FFD600", fontWeight: 600 },
+  achName: { fontSize: 14, fontWeight: 700, color: "#1a1a1a", marginBottom: 4 },
+  achDesc: { fontSize: 11, color: "rgba(0,0,0,0.4)", marginBottom: 8, lineHeight: 1.4 },
+  achDate: { fontSize: 10, color: "rgba(0,0,0,0.3)", marginBottom: 4 },
+  achXp: { fontSize: 11, color: "#ffdd2d", fontWeight: 600 },
 }

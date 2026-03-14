@@ -38,7 +38,7 @@ export default function PortfolioScreen() {
   }
 
   if (loading) return <div style={s.loading}>Загрузка...</div>
-  if (error || !portfolio) return <div style={s.loading}><div style={{fontSize:48,marginBottom:16}}>⚠️</div><div style={{marginBottom:16}}>{error||"Ошибка"}</div><button onClick={refresh} style={{padding:"10px 24px",borderRadius:10,border:"1px solid rgba(255,255,255,0.15)",background:"transparent",color:"#FFD600",cursor:"pointer",fontFamily:"inherit"}}>Повторить</button></div>
+  if (error || !portfolio) return <div style={s.loading}><div style={{fontSize:48,marginBottom:16}}>⚠️</div><div style={{marginBottom:16}}>{error||"Ошибка"}</div><button onClick={refresh} style={{padding:"10px 24px",borderRadius:10,border:"1px solid rgba(0,0,0,0.1)",background:"transparent",color:"#ffdd2d",cursor:"pointer",fontFamily:"inherit"}}>Повторить</button></div>
 
   return (
     <div style={s.page}>
@@ -51,7 +51,7 @@ export default function PortfolioScreen() {
           </div>
           <div style={{
             ...s.headerPnl,
-            color: portfolio.total_pnl >= 0 ? "#4caf50" : "#ef5350"
+            color: portfolio.total_pnl >= 0 ? "#21a038" : "#f44336"
           }}>
             {portfolio.total_pnl >= 0 ? "+" : ""}{portfolio.total_pnl.toLocaleString("ru-RU", { maximumFractionDigits: 0 })} ₽
             {" "}({portfolio.total_pnl_pct >= 0 ? "+" : ""}{portfolio.total_pnl_pct}%)
@@ -66,7 +66,7 @@ export default function PortfolioScreen() {
       {/* Sparkline */}
       {portfolio.sparkline?.length > 1 && (
         <div style={s.sparklineBox}>
-          <Sparkline data={portfolio.sparkline} color={portfolio.total_pnl >= 0 ? "#4caf50" : "#ef5350"} />
+          <Sparkline data={portfolio.sparkline} color={portfolio.total_pnl >= 0 ? "#21a038" : "#f44336"} />
         </div>
       )}
 
@@ -89,8 +89,8 @@ export default function PortfolioScreen() {
       {tradeMsg && (
         <div style={{
           ...s.tradeMsg,
-          background: tradeMsg.type === "success" ? "rgba(76,175,80,0.15)" : "rgba(239,83,80,0.15)",
-          color: tradeMsg.type === "success" ? "#4caf50" : "#ef5350",
+          background: tradeMsg.type === "success" ? "rgba(33,160,56,0.15)" : "rgba(244,67,54,0.15)",
+          color: tradeMsg.type === "success" ? "#21a038" : "#f44336",
         }}>
           {tradeMsg.text}
           <button onClick={() => setTradeMsg(null)} style={s.closeMsgBtn}>✕</button>
@@ -139,7 +139,7 @@ export default function PortfolioScreen() {
                   </div>
                   <div style={s.holdingRight}>
                     <div style={s.holdingValue}>{h.value.toLocaleString("ru-RU")} ₽</div>
-                    <div style={{ ...s.holdingPnl, color: h.pnl >= 0 ? "#4caf50" : "#ef5350" }}>
+                    <div style={{ ...s.holdingPnl, color: h.pnl >= 0 ? "#21a038" : "#f44336" }}>
                       {h.pnl >= 0 ? "+" : ""}{h.pnl.toLocaleString("ru-RU")} ₽ ({h.pnl_pct >= 0 ? "+" : ""}{h.pnl_pct}%)
                     </div>
                   </div>
@@ -171,14 +171,14 @@ export default function PortfolioScreen() {
               </div>
               <div style={s.holdingRight}>
                 <div style={s.holdingValue}>{stock.current_price?.toLocaleString("ru-RU")} ₽</div>
-                <div style={{ ...s.holdingPnl, color: stock.change_pct >= 0 ? "#4caf50" : "#ef5350" }}>
+                <div style={{ ...s.holdingPnl, color: stock.change_pct >= 0 ? "#21a038" : "#f44336" }}>
                   {stock.change_pct >= 0 ? "+" : ""}{stock.change_pct}%
                 </div>
               </div>
               {/* Mini sparkline */}
               {stock.sparkline?.length > 1 && (
                 <div style={{ width: 60, height: 24, marginLeft: 8 }}>
-                  <Sparkline data={stock.sparkline} color={stock.change_pct >= 0 ? "#4caf50" : "#ef5350"} height={24} />
+                  <Sparkline data={stock.sparkline} color={stock.change_pct >= 0 ? "#21a038" : "#f44336"} height={24} />
                 </div>
               )}
             </div>
@@ -193,21 +193,21 @@ export default function PortfolioScreen() {
             <div key={i} style={s.historyRow}>
               <div style={{ fontSize: 20 }}>{t.logo_emoji}</div>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: "#e8eaed" }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: "#1a1a1a" }}>
                   {t.action === "buy" ? "Покупка" : "Продажа"} {t.name}
                 </div>
-                <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)" }}>
+                <div style={{ fontSize: 11, color: "rgba(0,0,0,0.4)" }}>
                   {t.shares} шт × {t.price?.toLocaleString("ru-RU")} ₽
                 </div>
               </div>
               <div style={{ textAlign: "right" }}>
                 <div style={{
                   fontSize: 14, fontWeight: 600,
-                  color: t.action === "buy" ? "#ef5350" : "#4caf50",
+                  color: t.action === "buy" ? "#f44336" : "#21a038",
                 }}>
                   {t.action === "buy" ? "-" : "+"}{t.total?.toLocaleString("ru-RU")} ₽
                 </div>
-                <div style={{ fontSize: 11, color: "rgba(255,255,255,0.3)" }}>
+                <div style={{ fontSize: 11, color: "rgba(0,0,0,0.3)" }}>
                   {new Date(t.created_at).toLocaleDateString("ru-RU")}
                 </div>
               </div>
@@ -227,8 +227,8 @@ export default function PortfolioScreen() {
                 {selectedStock.logo_emoji}
               </div>
               <div>
-                <div style={{ fontSize: 18, fontWeight: 700, color: "#fff" }}>{selectedStock.name_ru || selectedStock.name}</div>
-                <div style={{ fontSize: 13, color: "rgba(255,255,255,0.5)" }}>{selectedStock.ticker} · {selectedStock.sector}</div>
+                <div style={{ fontSize: 18, fontWeight: 700, color: "#1a1a1a" }}>{selectedStock.name_ru || selectedStock.name}</div>
+                <div style={{ fontSize: 13, color: "rgba(0,0,0,0.45)" }}>{selectedStock.ticker} · {selectedStock.sector}</div>
               </div>
               <button onClick={() => setSelectedStock(null)} style={s.modalClose}>✕</button>
             </div>
@@ -272,14 +272,14 @@ export default function PortfolioScreen() {
 
             <div style={s.totalRow}>
               <span>Итого:</span>
-              <span style={{ fontWeight: 700, color: "#fff" }}>
+              <span style={{ fontWeight: 700, color: "#1a1a1a" }}>
                 {(tradeShares * (selectedStock.current_price || selectedStock.price)).toLocaleString("ru-RU")} ₽
               </span>
             </div>
 
             <button style={{
               ...s.tradeBtn,
-              background: tradeAction === "buy" ? "#4caf50" : "#ef5350",
+              background: tradeAction === "buy" ? "#21a038" : "#f44336",
             }} onClick={handleTrade}>
               {tradeAction === "buy" ? "Купить" : "Продать"} {tradeShares} акций
             </button>
@@ -290,7 +290,7 @@ export default function PortfolioScreen() {
   )
 }
 
-function Sparkline({ data, color = "#4caf50", height = 40 }) {
+function Sparkline({ data, color = "#21a038", height = 40 }) {
   if (!data || data.length < 2) return null
   const min = Math.min(...data)
   const max = Math.max(...data)
@@ -310,28 +310,29 @@ function Sparkline({ data, color = "#4caf50", height = 40 }) {
 
 const s = {
   page: { maxWidth: 900, margin: "0 auto" },
-  loading: { color: "rgba(255,255,255,0.5)", padding: 40, textAlign: "center" },
+  loading: { color: "rgba(0,0,0,0.45)", padding: 40, textAlign: "center" },
   header: {
     display: "flex", justifyContent: "space-between", alignItems: "flex-start",
     marginBottom: 16,
   },
-  headerLabel: { fontSize: 11, color: "rgba(255,255,255,0.4)", letterSpacing: 2, marginBottom: 6 },
-  headerValue: { fontSize: 36, fontWeight: 800, color: "#fff", marginBottom: 4 },
+  headerLabel: { fontSize: 11, color: "rgba(0,0,0,0.4)", letterSpacing: 2, marginBottom: 6 },
+  headerValue: { fontSize: 36, fontWeight: 800, color: "#1a1a1a", marginBottom: 4 },
   headerPnl: { fontSize: 16, fontWeight: 600 },
   balanceBox: { textAlign: "right" },
-  balanceLabel: { fontSize: 11, color: "rgba(255,255,255,0.4)", marginBottom: 4 },
-  balanceValue: { fontSize: 18, fontWeight: 700, color: "#fff" },
+  balanceLabel: { fontSize: 11, color: "rgba(0,0,0,0.4)", marginBottom: 4 },
+  balanceValue: { fontSize: 18, fontWeight: 700, color: "#1a1a1a" },
   sparklineBox: {
-    background: "#1a2634", borderRadius: 12, padding: "12px 16px",
-    marginBottom: 16, border: "1px solid rgba(255,255,255,0.06)",
+    background: "#ffffff", borderRadius: 12, padding: "12px 16px",
+    marginBottom: 16, border: "1px solid rgba(0,0,0,0.08)",
+    boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
   },
   tabs: { display: "flex", gap: 4, marginBottom: 16 },
   tab: {
-    padding: "8px 20px", border: "1px solid rgba(255,255,255,0.08)",
-    borderRadius: 8, background: "transparent", color: "rgba(255,255,255,0.5)",
+    padding: "8px 20px", border: "1px solid rgba(0,0,0,0.06)",
+    borderRadius: 8, background: "transparent", color: "rgba(0,0,0,0.45)",
     fontSize: 13, cursor: "pointer", fontFamily: "inherit", fontWeight: 500,
   },
-  tabActive: { background: "rgba(255,214,0,0.1)", color: "#FFD600", borderColor: "rgba(255,214,0,0.2)" },
+  tabActive: { background: "rgba(255,221,45,0.1)", color: "#ffdd2d", borderColor: "rgba(255,221,45,0.2)" },
   tradeMsg: {
     padding: "12px 16px", borderRadius: 10, marginBottom: 16,
     fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "space-between",
@@ -342,42 +343,45 @@ const s = {
   },
   allocBar: { display: "flex", borderRadius: 4, overflow: "hidden", marginBottom: 8 },
   allocLabels: { display: "flex", flexWrap: "wrap", gap: 12, marginBottom: 16 },
-  allocLabel: { fontSize: 11, color: "rgba(255,255,255,0.5)", display: "flex", alignItems: "center" },
+  allocLabel: { fontSize: 11, color: "rgba(0,0,0,0.45)", display: "flex", alignItems: "center" },
   holdingsList: { display: "flex", flexDirection: "column", gap: 2 },
   holdingRow: {
     display: "flex", alignItems: "center", gap: 12,
     padding: "12px 16px", borderRadius: 12,
-    background: "#1a2634", cursor: "pointer",
-    border: "1px solid rgba(255,255,255,0.04)",
+    background: "#ffffff", cursor: "pointer",
+    border: "1px solid rgba(0,0,0,0.04)",
     transition: "background 0.2s",
+    boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
   },
   holdingLogo: {
     width: 36, height: 36, borderRadius: 10, display: "flex",
     alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0,
   },
   holdingInfo: { flex: 1, minWidth: 0 },
-  holdingName: { fontSize: 14, fontWeight: 600, color: "#e8eaed" },
-  holdingTicker: { fontSize: 11, color: "rgba(255,255,255,0.4)" },
+  holdingName: { fontSize: 14, fontWeight: 600, color: "#1a1a1a" },
+  holdingTicker: { fontSize: 11, color: "rgba(0,0,0,0.4)" },
   holdingRight: { textAlign: "right" },
-  holdingValue: { fontSize: 14, fontWeight: 600, color: "#fff" },
+  holdingValue: { fontSize: 14, fontWeight: 600, color: "#1a1a1a" },
   holdingPnl: { fontSize: 12, fontWeight: 600 },
   stocksList: { display: "flex", flexDirection: "column", gap: 2 },
   stockRow: {
     display: "flex", alignItems: "center", gap: 12,
     padding: "12px 16px", borderRadius: 12,
-    background: "#1a2634", cursor: "pointer",
-    border: "1px solid rgba(255,255,255,0.04)",
+    background: "#ffffff", cursor: "pointer",
+    border: "1px solid rgba(0,0,0,0.04)",
+    boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
   },
   historyList: { display: "flex", flexDirection: "column", gap: 2 },
   historyRow: {
     display: "flex", alignItems: "center", gap: 12,
     padding: "12px 16px", borderRadius: 12,
-    background: "#1a2634",
-    border: "1px solid rgba(255,255,255,0.04)",
+    background: "#ffffff",
+    border: "1px solid rgba(0,0,0,0.04)",
+    boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
   },
   emptyState: {
     textAlign: "center", padding: "40px 20px",
-    color: "rgba(255,255,255,0.4)", fontSize: 14,
+    color: "rgba(0,0,0,0.4)", fontSize: 14,
   },
   // Modal
   modalOverlay: {
@@ -385,41 +389,42 @@ const s = {
     display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200,
   },
   modal: {
-    background: "#1a2634", borderRadius: 20, padding: "28px 24px",
-    width: 400, maxWidth: "90vw", border: "1px solid rgba(255,255,255,0.08)",
+    background: "#ffffff", borderRadius: 20, padding: "28px 24px",
+    width: 400, maxWidth: "90vw", border: "1px solid rgba(0,0,0,0.06)",
+    boxShadow: "0 4px 24px rgba(0,0,0,0.12)",
   },
   modalHeader: { display: "flex", alignItems: "center", gap: 12, marginBottom: 16 },
   modalClose: {
     marginLeft: "auto", background: "transparent", border: "none",
-    color: "rgba(255,255,255,0.4)", fontSize: 20, cursor: "pointer",
+    color: "rgba(0,0,0,0.4)", fontSize: 20, cursor: "pointer",
   },
-  modalPrice: { fontSize: 28, fontWeight: 800, color: "#fff", marginBottom: 8, textAlign: "center" },
+  modalPrice: { fontSize: 28, fontWeight: 800, color: "#1a1a1a", marginBottom: 8, textAlign: "center" },
   modalMeta: {
     display: "flex", justifyContent: "center", gap: 20,
-    fontSize: 12, color: "rgba(255,255,255,0.5)", marginBottom: 12,
+    fontSize: 12, color: "rgba(0,0,0,0.45)", marginBottom: 12,
   },
-  modalDesc: { fontSize: 13, color: "rgba(255,255,255,0.5)", marginBottom: 16, lineHeight: 1.5, textAlign: "center" },
+  modalDesc: { fontSize: 13, color: "rgba(0,0,0,0.45)", marginBottom: 16, lineHeight: 1.5, textAlign: "center" },
   tradeToggle: { display: "flex", gap: 4, marginBottom: 16 },
   tradeToggleBtn: {
-    flex: 1, padding: "10px 0", border: "1px solid rgba(255,255,255,0.1)",
-    borderRadius: 8, background: "transparent", color: "rgba(255,255,255,0.5)",
+    flex: 1, padding: "10px 0", border: "1px solid rgba(0,0,0,0.06)",
+    borderRadius: 8, background: "transparent", color: "rgba(0,0,0,0.45)",
     fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit",
   },
-  tradeToggleBuy: { background: "rgba(76,175,80,0.15)", color: "#4caf50", borderColor: "rgba(76,175,80,0.3)" },
-  tradeToggleSell: { background: "rgba(239,83,80,0.15)", color: "#ef5350", borderColor: "rgba(239,83,80,0.3)" },
+  tradeToggleBuy: { background: "rgba(33,160,56,0.15)", color: "#21a038", borderColor: "rgba(33,160,56,0.3)" },
+  tradeToggleSell: { background: "rgba(244,67,54,0.15)", color: "#f44336", borderColor: "rgba(244,67,54,0.3)" },
   sharesRow: { display: "flex", alignItems: "center", justifyContent: "center", gap: 20, marginBottom: 16 },
   shareBtn: {
-    width: 40, height: 40, borderRadius: 10, border: "1px solid rgba(255,255,255,0.1)",
-    background: "transparent", color: "#fff", fontSize: 20, cursor: "pointer",
+    width: 40, height: 40, borderRadius: 10, border: "1px solid rgba(0,0,0,0.06)",
+    background: "transparent", color: "#1a1a1a", fontSize: 20, cursor: "pointer",
     display: "flex", alignItems: "center", justifyContent: "center",
   },
   sharesDisplay: { textAlign: "center" },
-  sharesNum: { fontSize: 28, fontWeight: 800, color: "#fff" },
-  sharesLabel: { fontSize: 11, color: "rgba(255,255,255,0.4)" },
+  sharesNum: { fontSize: 28, fontWeight: 800, color: "#1a1a1a" },
+  sharesLabel: { fontSize: 11, color: "rgba(0,0,0,0.4)" },
   totalRow: {
     display: "flex", justifyContent: "space-between", alignItems: "center",
-    padding: "12px 0", borderTop: "1px solid rgba(255,255,255,0.06)",
-    marginBottom: 16, fontSize: 14, color: "rgba(255,255,255,0.5)",
+    padding: "12px 0", borderTop: "1px solid rgba(0,0,0,0.08)",
+    marginBottom: 16, fontSize: 14, color: "rgba(0,0,0,0.45)",
   },
   tradeBtn: {
     width: "100%", padding: "14px 0", border: "none", borderRadius: 12,

@@ -221,7 +221,7 @@ function VisualScreen({ screen, onNext }) {
       {!["inflation_calculator", "compound_calculator", "risk_return_scale", "pe_comparison", "dividend_calculator"].includes(screen.interactive) && screen.interactive && (
         <div style={s.interactiveBox}>
           <div style={{ fontSize: 32, marginBottom: 8 }}>📊</div>
-          <div style={{ fontSize: 13, color: "rgba(255,255,255,0.5)" }}>Интерактивная визуализация</div>
+          <div style={{ fontSize: 13, color: "rgba(0,0,0,0.45)" }}>Интерактивная визуализация</div>
         </div>
       )}
 
@@ -325,7 +325,7 @@ function PracticeScreen({ screen, buyTicker, buyShares, buyDone, onSelectTicker,
       {buyDone ? (
         <div style={s.buySuccess}>
           <div style={{ fontSize: 48 }}>🎉</div>
-          <div style={{ fontSize: 16, fontWeight: 700, color: "#4caf50", marginTop: 8 }}>Акция куплена!</div>
+          <div style={{ fontSize: 16, fontWeight: 700, color: "#21a038", marginTop: 8 }}>Акция куплена!</div>
           <button style={s.primaryBtn} onClick={onNext}>Далее →</button>
         </div>
       ) : (
@@ -343,8 +343,8 @@ function PracticeScreen({ screen, buyTicker, buyShares, buyDone, onSelectTicker,
                   }}
                 >
                   <span style={{ fontSize: 24 }}>{st.emoji}</span>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: "#e8eaed" }}>{st.name}</div>
-                  <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)" }}>{st.price?.toLocaleString("ru-RU")} ₽</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: "#1a1a1a" }}>{st.name}</div>
+                  <div style={{ fontSize: 11, color: "rgba(0,0,0,0.4)" }}>{st.price?.toLocaleString("ru-RU")} ₽</div>
                 </button>
               )
             })}
@@ -453,7 +453,7 @@ function InflationCalc({ params }) {
             <div style={s.widgetItemLabel}>{y === 0 ? "Сейчас" : `Через ${y} лет`}</div>
             <div style={{
               ...s.widgetItemValue,
-              color: y === 0 ? "#4caf50" : values[y] < initial * 0.7 ? "#ef5350" : "#FFD600",
+              color: y === 0 ? "#21a038" : values[y] < initial * 0.7 ? "#f44336" : "#ffdd2d",
             }}>
               {values[y]?.toLocaleString("ru-RU")} ₽
             </div>
@@ -483,7 +483,7 @@ function CompoundCalc({ params }) {
           <div key={r.years} style={s.widgetItem}>
             <div style={s.widgetItemLabel}>{r.years} лет</div>
             <div style={s.widgetItemValue}>{r.total.toLocaleString("ru-RU")} ₽</div>
-            <div style={{ fontSize: 10, color: "rgba(255,255,255,0.3)" }}>
+            <div style={{ fontSize: 10, color: "rgba(0,0,0,0.3)" }}>
               вложено: {r.invested.toLocaleString("ru-RU")} ₽
             </div>
           </div>
@@ -500,16 +500,16 @@ function RiskReturnScale({ params }) {
       {items.map((item, i) => (
         <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "8px 0" }}>
           <span style={{ fontSize: 20 }}>{item.emoji}</span>
-          <span style={{ flex: 1, fontSize: 13, color: "#e8eaed" }}>{item.name}</span>
+          <span style={{ flex: 1, fontSize: 13, color: "#1a1a1a" }}>{item.name}</span>
           <div style={{ display: "flex", gap: 4 }}>
             {Array.from({ length: 5 }, (_, j) => (
               <div key={j} style={{
                 width: 12, height: 12, borderRadius: 2,
-                background: j < item.risk ? (item.risk >= 4 ? "#ef5350" : item.risk >= 3 ? "#FFA000" : "#4caf50") : "rgba(255,255,255,0.08)",
+                background: j < item.risk ? (item.risk >= 4 ? "#f44336" : item.risk >= 3 ? "#FFA000" : "#21a038") : "rgba(0,0,0,0.06)",
               }} />
             ))}
           </div>
-          <span style={{ fontSize: 12, color: "#FFD600", width: 40, textAlign: "right" }}>~{item.return_pct}%</span>
+          <span style={{ fontSize: 12, color: "#ffdd2d", width: 40, textAlign: "right" }}>~{item.return_pct}%</span>
         </div>
       ))}
     </div>
@@ -521,14 +521,14 @@ function PEComparison({ params }) {
   return (
     <div style={s.widget}>
       {companies.map((c, i) => (
-        <div key={i} style={{ padding: "10px 0", borderBottom: i < companies.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none" }}>
+        <div key={i} style={{ padding: "10px 0", borderBottom: i < companies.length - 1 ? "1px solid rgba(0,0,0,0.04)" : "none" }}>
           <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-            <span style={{ fontSize: 14, fontWeight: 600, color: "#e8eaed" }}>{c.name}</span>
-            <span style={{ fontSize: 14, fontWeight: 700, color: "#FFD600" }}>P/E {c.pe}</span>
+            <span style={{ fontSize: 14, fontWeight: 600, color: "#1a1a1a" }}>{c.name}</span>
+            <span style={{ fontSize: 14, fontWeight: 700, color: "#ffdd2d" }}>P/E {c.pe}</span>
           </div>
-          <div style={{ fontSize: 12, color: "rgba(255,255,255,0.4)" }}>{c.comment}</div>
-          <div style={{ marginTop: 4, height: 4, background: "rgba(255,255,255,0.06)", borderRadius: 2, overflow: "hidden" }}>
-            <div style={{ height: "100%", width: `${Math.min(c.pe / 80 * 100, 100)}%`, background: c.pe > 40 ? "#ef5350" : c.pe > 20 ? "#FFA000" : "#4caf50", borderRadius: 2 }} />
+          <div style={{ fontSize: 12, color: "rgba(0,0,0,0.4)" }}>{c.comment}</div>
+          <div style={{ marginTop: 4, height: 4, background: "rgba(0,0,0,0.08)", borderRadius: 2, overflow: "hidden" }}>
+            <div style={{ height: "100%", width: `${Math.min(c.pe / 80 * 100, 100)}%`, background: c.pe > 40 ? "#f44336" : c.pe > 20 ? "#FFA000" : "#21a038", borderRadius: 2 }} />
           </div>
         </div>
       ))}
@@ -545,21 +545,21 @@ function DividendCalc({ params }) {
     <div style={s.widget}>
       {stocks.map(st => (
         <div key={st.ticker} style={{ display: "flex", alignItems: "center", gap: 12, padding: "8px 0" }}>
-          <span style={{ fontSize: 13, fontWeight: 600, color: "#e8eaed", width: 90 }}>{st.name}</span>
-          <span style={{ fontSize: 11, color: "#4caf50" }}>{st.yield}%</span>
+          <span style={{ fontSize: 13, fontWeight: 600, color: "#1a1a1a", width: 90 }}>{st.name}</span>
+          <span style={{ fontSize: 11, color: "#21a038" }}>{st.yield}%</span>
           <input type="range" min={0} max={500000} step={10000}
             value={amounts[st.ticker] || 0}
             onChange={e => setAmounts(prev => ({ ...prev, [st.ticker]: +e.target.value }))}
             style={{ ...s.slider, flex: 1 }} />
-          <span style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", width: 60, textAlign: "right" }}>
+          <span style={{ fontSize: 11, color: "rgba(0,0,0,0.4)", width: 60, textAlign: "right" }}>
             {(amounts[st.ticker] || 0).toLocaleString("ru-RU")}
           </span>
         </div>
       ))}
-      <div style={{ marginTop: 12, padding: "12px", background: "rgba(255,214,0,0.1)", borderRadius: 8, textAlign: "center" }}>
-        <div style={{ fontSize: 12, color: "rgba(255,255,255,0.5)" }}>Годовой дивидендный доход</div>
-        <div style={{ fontSize: 24, fontWeight: 800, color: "#FFD600" }}>{Math.round(totalDividend).toLocaleString("ru-RU")} ₽/год</div>
-        <div style={{ fontSize: 11, color: "rgba(255,255,255,0.3)" }}>{Math.round(totalDividend / 12).toLocaleString("ru-RU")} ₽/мес</div>
+      <div style={{ marginTop: 12, padding: "12px", background: "rgba(255,221,45,0.1)", borderRadius: 8, textAlign: "center" }}>
+        <div style={{ fontSize: 12, color: "rgba(0,0,0,0.45)" }}>Годовой дивидендный доход</div>
+        <div style={{ fontSize: 24, fontWeight: 800, color: "#ffdd2d" }}>{Math.round(totalDividend).toLocaleString("ru-RU")} ₽/год</div>
+        <div style={{ fontSize: 11, color: "rgba(0,0,0,0.3)" }}>{Math.round(totalDividend / 12).toLocaleString("ru-RU")} ₽/мес</div>
       </div>
     </div>
   )
@@ -572,14 +572,14 @@ function TabsVisual({ tabs }) {
       <div style={{ display: "flex", gap: 4, marginBottom: 12 }}>
         {tabs.map((t, i) => (
           <button key={i} onClick={() => setActive(i)} style={{
-            flex: 1, padding: "8px", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 6,
-            background: active === i ? "rgba(255,214,0,0.1)" : "transparent",
-            color: active === i ? "#FFD600" : "rgba(255,255,255,0.5)",
+            flex: 1, padding: "8px", border: "1px solid rgba(0,0,0,0.06)", borderRadius: 6,
+            background: active === i ? "rgba(255,221,45,0.1)" : "transparent",
+            color: active === i ? "#ffdd2d" : "rgba(0,0,0,0.45)",
             fontSize: 12, cursor: "pointer", fontFamily: "inherit",
           }}>{t.icon}</button>
         ))}
       </div>
-      <div style={{ textAlign: "center", padding: "12px", fontSize: 14, color: "#e8eaed" }}>
+      <div style={{ textAlign: "center", padding: "12px", fontSize: 14, color: "#1a1a1a" }}>
         {tabs[active]?.title}
       </div>
     </div>
@@ -592,11 +592,11 @@ function FactorsVisual({ factors }) {
       {factors.map((f, i) => (
         <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 0" }}>
           <span style={{ fontSize: 18 }}>{f.icon}</span>
-          <span style={{ flex: 1, fontSize: 13, color: "#e8eaed" }}>{f.name}</span>
+          <span style={{ flex: 1, fontSize: 13, color: "#1a1a1a" }}>{f.name}</span>
           <span style={{
             fontSize: 10, padding: "2px 8px", borderRadius: 4, fontWeight: 700,
-            background: f.impact === "high" ? "rgba(239,83,80,0.15)" : f.impact === "medium" ? "rgba(255,160,0,0.15)" : "rgba(76,175,80,0.15)",
-            color: f.impact === "high" ? "#ef5350" : f.impact === "medium" ? "#FFA000" : "#4caf50",
+            background: f.impact === "high" ? "rgba(244,67,54,0.15)" : f.impact === "medium" ? "rgba(255,160,0,0.15)" : "rgba(33,160,56,0.15)",
+            color: f.impact === "high" ? "#f44336" : f.impact === "medium" ? "#FFA000" : "#21a038",
           }}>
             {f.impact === "high" ? "Сильное" : f.impact === "medium" ? "Среднее" : "Слабое"}
           </span>
@@ -612,7 +612,7 @@ function ItemsVisual({ items }) {
       {items.map((item, i) => (
         <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 0" }}>
           <span style={{ fontSize: 18 }}>{item.emoji}</span>
-          <span style={{ flex: 1, fontSize: 13, color: "#e8eaed" }}>{item.name}</span>
+          <span style={{ flex: 1, fontSize: 13, color: "#1a1a1a" }}>{item.name}</span>
         </div>
       ))}
     </div>
@@ -623,161 +623,164 @@ function ItemsVisual({ items }) {
 
 const s = {
   page: { maxWidth: 680, margin: "0 auto" },
-  loading: { color: "rgba(255,255,255,0.5)", padding: 60, textAlign: "center", fontSize: 16 },
+  loading: { color: "rgba(0,0,0,0.45)", padding: 60, textAlign: "center", fontSize: 16 },
   topBar: { display: "flex", alignItems: "center", gap: 12, marginBottom: 24 },
   backBtn: {
-    background: "transparent", border: "none", color: "rgba(255,255,255,0.5)",
+    background: "transparent", border: "none", color: "rgba(0,0,0,0.45)",
     fontSize: 14, cursor: "pointer", fontFamily: "inherit", padding: "4px 0",
     flexShrink: 0,
   },
   progressBar: {
-    flex: 1, height: 6, background: "rgba(255,255,255,0.08)", borderRadius: 3, overflow: "hidden",
+    flex: 1, height: 6, background: "rgba(0,0,0,0.06)", borderRadius: 3, overflow: "hidden",
   },
   progressFill: {
-    height: "100%", background: "linear-gradient(90deg, #FFD600, #FFA000)",
+    height: "100%", background: "linear-gradient(90deg, #ffdd2d, #FFA000)",
     borderRadius: 3, transition: "width 0.4s ease",
   },
-  progressText: { fontSize: 12, color: "rgba(255,255,255,0.3)", flexShrink: 0 },
+  progressText: { fontSize: 12, color: "rgba(0,0,0,0.3)", flexShrink: 0 },
   screenCard: {
-    background: "#1a2634", borderRadius: 20, padding: "32px 28px",
-    border: "1px solid rgba(255,255,255,0.06)",
+    background: "#ffffff", borderRadius: 20, padding: "32px 28px",
+    border: "1px solid rgba(0,0,0,0.08)",
     animation: "fadeIn 0.3s ease",
+    boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
   },
   screenInner: { display: "flex", flexDirection: "column", gap: 20 },
   // Hook
   highlight: {
-    padding: "8px 16px", background: "rgba(255,214,0,0.1)", borderRadius: 8,
-    color: "#FFD600", fontSize: 14, fontWeight: 700, textAlign: "center",
+    padding: "8px 16px", background: "rgba(255,221,45,0.1)", borderRadius: 8,
+    color: "#ffdd2d", fontSize: 14, fontWeight: 700, textAlign: "center",
   },
-  hookTitle: { fontSize: 24, fontWeight: 800, color: "#fff" },
-  hookText: { fontSize: 16, color: "rgba(255,255,255,0.75)", lineHeight: 1.7, whiteSpace: "pre-line" },
+  hookTitle: { fontSize: 24, fontWeight: 800, color: "#1a1a1a" },
+  hookText: { fontSize: 16, color: "rgba(0,0,0,0.6)", lineHeight: 1.7, whiteSpace: "pre-line" },
   // Visual
-  visualTitle: { fontSize: 20, fontWeight: 700, color: "#fff" },
-  visualText: { fontSize: 14, color: "rgba(255,255,255,0.65)", lineHeight: 1.6, whiteSpace: "pre-line" },
+  visualTitle: { fontSize: 20, fontWeight: 700, color: "#1a1a1a" },
+  visualText: { fontSize: 14, color: "rgba(0,0,0,0.55)", lineHeight: 1.6, whiteSpace: "pre-line" },
   interactiveBox: {
-    padding: "32px 20px", background: "rgba(255,255,255,0.03)", borderRadius: 12,
-    textAlign: "center", border: "1px dashed rgba(255,255,255,0.08)",
+    padding: "32px 20px", background: "rgba(0,0,0,0.03)", borderRadius: 12,
+    textAlign: "center", border: "1px dashed rgba(0,0,0,0.06)",
   },
   // Decision
-  decisionTitle: { fontSize: 20, fontWeight: 700, color: "#fff" },
-  decisionText: { fontSize: 14, color: "rgba(255,255,255,0.65)", lineHeight: 1.6 },
+  decisionTitle: { fontSize: 20, fontWeight: 700, color: "#1a1a1a" },
+  decisionText: { fontSize: 14, color: "rgba(0,0,0,0.55)", lineHeight: 1.6 },
   optionsList: { display: "flex", flexDirection: "column", gap: 8 },
   optionBtn: {
-    width: "100%", padding: "14px 16px", border: "1px solid rgba(255,255,255,0.08)",
-    borderRadius: 12, background: "rgba(255,255,255,0.03)", color: "#e8eaed",
+    width: "100%", padding: "14px 16px", border: "1px solid rgba(0,0,0,0.06)",
+    borderRadius: 12, background: "rgba(0,0,0,0.03)", color: "#1a1a1a",
     fontSize: 14, cursor: "pointer", textAlign: "left", fontFamily: "inherit",
     display: "flex", alignItems: "flex-start", gap: 12, transition: "all 0.2s",
   },
-  optionSelected: { borderColor: "#FFD600", background: "rgba(255,214,0,0.08)" },
-  optionBetter: { borderColor: "#4caf50", background: "rgba(76,175,80,0.1)" },
-  optionNeutral: { borderColor: "rgba(255,255,255,0.15)" },
+  optionSelected: { borderColor: "#ffdd2d", background: "rgba(255,221,45,0.08)" },
+  optionBetter: { borderColor: "#21a038", background: "rgba(33,160,56,0.1)" },
+  optionNeutral: { borderColor: "rgba(0,0,0,0.1)" },
   optionEmoji: { fontSize: 20, flexShrink: 0 },
   optionText: { fontSize: 14, lineHeight: 1.5 },
-  optionDetail: { fontSize: 11, color: "rgba(255,255,255,0.4)", marginTop: 4 },
+  optionDetail: { fontSize: 11, color: "rgba(0,0,0,0.4)", marginTop: 4 },
   outcomeBox: {
-    padding: "12px 16px", background: "rgba(255,214,0,0.06)", borderRadius: 8,
-    fontSize: 13, color: "rgba(255,255,255,0.7)", lineHeight: 1.5, marginTop: 4,
-    borderLeft: "3px solid #FFD600",
+    padding: "12px 16px", background: "rgba(255,221,45,0.06)", borderRadius: 8,
+    fontSize: 13, color: "rgba(0,0,0,0.55)", lineHeight: 1.5, marginTop: 4,
+    borderLeft: "3px solid #ffdd2d",
   },
   noteBox: {
-    padding: "12px 16px", background: "rgba(255,255,255,0.04)", borderRadius: 8,
-    fontSize: 13, color: "rgba(255,255,255,0.6)", lineHeight: 1.5, fontStyle: "italic",
+    padding: "12px 16px", background: "rgba(0,0,0,0.04)", borderRadius: 8,
+    fontSize: 13, color: "rgba(0,0,0,0.55)", lineHeight: 1.5, fontStyle: "italic",
   },
   // Consequences
-  consequencesTitle: { fontSize: 20, fontWeight: 700, color: "#fff" },
-  consequencesText: { fontSize: 14, color: "rgba(255,255,255,0.65)", lineHeight: 1.6 },
+  consequencesTitle: { fontSize: 20, fontWeight: 700, color: "#1a1a1a" },
+  consequencesText: { fontSize: 14, color: "rgba(0,0,0,0.55)", lineHeight: 1.6 },
   // Insight
   insightIcon: { fontSize: 48, textAlign: "center" },
   insightText: {
-    fontSize: 18, fontWeight: 600, color: "#e8eaed", textAlign: "center",
+    fontSize: 18, fontWeight: 600, color: "#1a1a1a", textAlign: "center",
     lineHeight: 1.7, whiteSpace: "pre-line",
   },
   // Practice
-  practiceTitle: { fontSize: 20, fontWeight: 700, color: "#fff" },
-  practiceText: { fontSize: 14, color: "rgba(255,255,255,0.65)", lineHeight: 1.6 },
+  practiceTitle: { fontSize: 20, fontWeight: 700, color: "#1a1a1a" },
+  practiceText: { fontSize: 14, color: "rgba(0,0,0,0.55)", lineHeight: 1.6 },
   stockPicker: { display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 },
   stockPickBtn: {
-    padding: "16px 8px", border: "1px solid rgba(255,255,255,0.08)",
-    borderRadius: 12, background: "rgba(255,255,255,0.03)",
+    padding: "16px 8px", border: "1px solid rgba(0,0,0,0.06)",
+    borderRadius: 12, background: "rgba(0,0,0,0.03)",
     cursor: "pointer", textAlign: "center", fontFamily: "inherit",
     display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
     transition: "all 0.2s",
   },
-  stockPickSelected: { borderColor: "#FFD600", background: "rgba(255,214,0,0.08)" },
+  stockPickSelected: { borderColor: "#ffdd2d", background: "rgba(255,221,45,0.08)" },
   buyControls: { display: "flex", flexDirection: "column", gap: 12, alignItems: "center" },
   sharesRow: { display: "flex", alignItems: "center", gap: 20 },
   shareBtn: {
-    width: 40, height: 40, borderRadius: 10, border: "1px solid rgba(255,255,255,0.1)",
-    background: "transparent", color: "#fff", fontSize: 20, cursor: "pointer",
+    width: 40, height: 40, borderRadius: 10, border: "1px solid rgba(0,0,0,0.06)",
+    background: "transparent", color: "#1a1a1a", fontSize: 20, cursor: "pointer",
     display: "flex", alignItems: "center", justifyContent: "center",
   },
   sharesDisplay: { textAlign: "center" },
-  sharesNum: { fontSize: 28, fontWeight: 800, color: "#fff" },
-  sharesLabel: { fontSize: 11, color: "rgba(255,255,255,0.4)" },
-  totalRow: { fontSize: 14, color: "rgba(255,255,255,0.5)" },
+  sharesNum: { fontSize: 28, fontWeight: 800, color: "#1a1a1a" },
+  sharesLabel: { fontSize: 11, color: "rgba(0,0,0,0.4)" },
+  totalRow: { fontSize: 14, color: "rgba(0,0,0,0.45)" },
   buyBtn: {
     padding: "12px 40px", border: "none", borderRadius: 10,
-    background: "#4caf50", color: "#fff", fontSize: 15, fontWeight: 700,
+    background: "#21a038", color: "#fff", fontSize: 15, fontWeight: 700,
     cursor: "pointer", fontFamily: "inherit",
   },
   buySuccess: { textAlign: "center", padding: "20px 0" },
   // Quiz
-  quizQuestion: { fontSize: 18, fontWeight: 700, color: "#fff", lineHeight: 1.5 },
+  quizQuestion: { fontSize: 18, fontWeight: 700, color: "#1a1a1a", lineHeight: 1.5 },
   quizOption: {
-    width: "100%", padding: "14px 16px", border: "1px solid rgba(255,255,255,0.08)",
-    borderRadius: 12, background: "rgba(255,255,255,0.03)", color: "#e8eaed",
+    width: "100%", padding: "14px 16px", border: "1px solid rgba(0,0,0,0.06)",
+    borderRadius: 12, background: "rgba(0,0,0,0.03)", color: "#1a1a1a",
     fontSize: 14, cursor: "pointer", textAlign: "left", fontFamily: "inherit",
     display: "flex", alignItems: "center", gap: 12, transition: "all 0.2s",
   },
-  quizOptionSelected: { borderColor: "#FFD600", background: "rgba(255,214,0,0.08)" },
-  quizOptionCorrect: { borderColor: "#4caf50", background: "rgba(76,175,80,0.1)" },
-  quizOptionWrong: { borderColor: "#ef5350", background: "rgba(239,83,80,0.1)" },
+  quizOptionSelected: { borderColor: "#ffdd2d", background: "rgba(255,221,45,0.08)" },
+  quizOptionCorrect: { borderColor: "#21a038", background: "rgba(33,160,56,0.1)" },
+  quizOptionWrong: { borderColor: "#f44336", background: "rgba(244,67,54,0.1)" },
   quizDot: {
-    width: 28, height: 28, borderRadius: "50%", background: "rgba(255,255,255,0.06)",
+    width: 28, height: 28, borderRadius: "50%", background: "rgba(0,0,0,0.08)",
     display: "flex", alignItems: "center", justifyContent: "center",
     fontSize: 12, fontWeight: 700, flexShrink: 0,
   },
   explanationBox: {
-    padding: "12px 16px", background: "rgba(76,175,80,0.08)", borderRadius: 10,
-    fontSize: 13, color: "rgba(255,255,255,0.7)", lineHeight: 1.5,
-    borderLeft: "3px solid #4caf50",
+    padding: "12px 16px", background: "rgba(33,160,56,0.08)", borderRadius: 10,
+    fontSize: 13, color: "rgba(0,0,0,0.55)", lineHeight: 1.5,
+    borderLeft: "3px solid #21a038",
   },
   // Result
   resultIcon: { fontSize: 64, textAlign: "center" },
-  resultTitle: { fontSize: 24, fontWeight: 800, color: "#fff", textAlign: "center" },
+  resultTitle: { fontSize: 24, fontWeight: 800, color: "#1a1a1a", textAlign: "center" },
   resultStats: { display: "flex", flexDirection: "column", gap: 8, alignItems: "center" },
-  resultStat: { fontSize: 14, color: "rgba(255,255,255,0.7)" },
+  resultStat: { fontSize: 14, color: "rgba(0,0,0,0.55)" },
   // Completion
   completionCard: {
-    background: "#1a2634", borderRadius: 20, padding: "48px 32px",
-    textAlign: "center", border: "1px solid rgba(255,255,255,0.06)",
+    background: "#ffffff", borderRadius: 20, padding: "48px 32px",
+    textAlign: "center", border: "1px solid rgba(0,0,0,0.08)",
     maxWidth: 500, margin: "60px auto",
+    boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
   },
   confetti: { fontSize: 72, marginBottom: 16 },
-  completionTitle: { fontSize: 24, fontWeight: 800, color: "#fff", marginBottom: 8 },
-  completionSubtitle: { fontSize: 16, color: "rgba(255,255,255,0.5)", marginBottom: 24 },
+  completionTitle: { fontSize: 24, fontWeight: 800, color: "#1a1a1a", marginBottom: 8 },
+  completionSubtitle: { fontSize: 16, color: "rgba(0,0,0,0.45)", marginBottom: 24 },
   completionStats: { display: "flex", flexDirection: "column", gap: 12, marginBottom: 32 },
   completionStat: {
     display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-    fontSize: 15, color: "#e8eaed",
+    fontSize: 15, color: "#1a1a1a",
   },
   completionStatIcon: { fontSize: 20 },
   completionActions: { display: "flex", gap: 8, justifyContent: "center" },
   // Shared
   primaryBtn: {
     width: "100%", padding: "14px 0", border: "none", borderRadius: 12,
-    background: "#FFD600", color: "#000", fontSize: 15, fontWeight: 700,
+    background: "#ffdd2d", color: "#000", fontSize: 15, fontWeight: 700,
     cursor: "pointer", fontFamily: "inherit", transition: "all 0.2s",
   },
   // Widgets
   widget: {
-    padding: "16px", background: "rgba(255,255,255,0.03)", borderRadius: 12,
-    border: "1px solid rgba(255,255,255,0.06)",
+    padding: "16px", background: "#f6f7f8", borderRadius: 12,
+    border: "1px solid rgba(0,0,0,0.08)",
+    boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
   },
-  widgetLabel: { fontSize: 13, color: "rgba(255,255,255,0.5)", marginBottom: 8 },
-  slider: { width: "100%", accentColor: "#FFD600" },
+  widgetLabel: { fontSize: 13, color: "rgba(0,0,0,0.45)", marginBottom: 8 },
+  slider: { width: "100%", accentColor: "#ffdd2d" },
   widgetGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(100px, 1fr))", gap: 8, marginTop: 12 },
   widgetItem: { textAlign: "center", padding: "8px" },
-  widgetItemLabel: { fontSize: 11, color: "rgba(255,255,255,0.4)", marginBottom: 4 },
+  widgetItemLabel: { fontSize: 11, color: "rgba(0,0,0,0.4)", marginBottom: 4 },
   widgetItemValue: { fontSize: 15, fontWeight: 700 },
 }

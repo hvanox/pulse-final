@@ -19,7 +19,7 @@ export default function LearnScreen({ onStartLesson }) {
   }
 
   if (loading) return <div style={s.loading}>Загрузка...</div>
-  if (error) return <div style={s.loading}><div style={{fontSize:48,marginBottom:16}}>⚠️</div><div style={{marginBottom:16}}>{error}</div><button onClick={loadMods} style={{padding:"10px 24px",borderRadius:10,border:"1px solid rgba(255,255,255,0.15)",background:"transparent",color:"#FFD600",cursor:"pointer",fontFamily:"inherit"}}>Повторить</button></div>
+  if (error) return <div style={s.loading}><div style={{fontSize:48,marginBottom:16}}>⚠️</div><div style={{marginBottom:16}}>{error}</div><button onClick={loadMods} style={{padding:"10px 24px",borderRadius:10,border:"1px solid rgba(0,0,0,0.1)",background:"transparent",color:"#ffdd2d",cursor:"pointer",fontFamily:"inherit"}}>Повторить</button></div>
 
   return (
     <div style={s.page}>
@@ -64,7 +64,7 @@ export default function LearnScreen({ onStartLesson }) {
                   }} onClick={() => !lesson.locked && onStartLesson(lesson.id)}>
                     <div style={{
                       ...s.lessonDot,
-                      background: lesson.completed ? "#4caf50" : lesson.locked ? "rgba(255,255,255,0.1)" : "#FFD600",
+                      background: lesson.completed ? "#21a038" : lesson.locked ? "rgba(0,0,0,0.06)" : "#ffdd2d",
                     }}>
                       {lesson.completed ? "✓" : lesson.locked ? "🔒" : li + 1}
                     </div>
@@ -74,7 +74,7 @@ export default function LearnScreen({ onStartLesson }) {
                     </div>
                     <div style={s.lessonMeta}>
                       <span>⏱ {lesson.duration_min} мин</span>
-                      <span style={{ color: "#FFD600" }}>+{lesson.xp_reward} XP</span>
+                      <span style={{ color: "#ffdd2d" }}>+{lesson.xp_reward} XP</span>
                     </div>
                     {lesson.completed && (
                       <span style={s.completedBadge}>✅</span>
@@ -92,13 +92,14 @@ export default function LearnScreen({ onStartLesson }) {
 
 const s = {
   page: { maxWidth: 800, margin: "0 auto" },
-  loading: { color: "rgba(255,255,255,0.5)", padding: 40, textAlign: "center" },
-  pageTitle: { fontSize: 28, fontWeight: 800, color: "#fff", marginBottom: 4 },
-  subtitle: { fontSize: 14, color: "rgba(255,255,255,0.4)", marginBottom: 24 },
+  loading: { color: "rgba(0,0,0,0.45)", padding: 40, textAlign: "center" },
+  pageTitle: { fontSize: 28, fontWeight: 800, color: "#1a1a1a", marginBottom: 4 },
+  subtitle: { fontSize: 14, color: "rgba(0,0,0,0.4)", marginBottom: 24 },
   modulesList: { display: "flex", flexDirection: "column", gap: 12 },
   moduleCard: {
-    background: "#1a2634", borderRadius: 16,
-    border: "1px solid rgba(255,255,255,0.06)", overflow: "hidden",
+    background: "#ffffff", borderRadius: 16,
+    border: "1px solid rgba(0,0,0,0.08)", overflow: "hidden",
+    boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
   },
   moduleHeader: {
     display: "flex", alignItems: "center", gap: 14,
@@ -106,27 +107,27 @@ const s = {
   },
   moduleNum: {
     width: 28, height: 28, borderRadius: "50%",
-    background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.3)",
+    background: "rgba(0,0,0,0.08)", color: "rgba(0,0,0,0.3)",
     display: "flex", alignItems: "center", justifyContent: "center",
     fontSize: 13, fontWeight: 700, flexShrink: 0,
   },
   moduleIcon: { fontSize: 24, flexShrink: 0 },
   moduleInfo: { flex: 1 },
-  moduleTitle: { fontSize: 16, fontWeight: 700, color: "#e8eaed", marginBottom: 2 },
-  moduleDesc: { fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 8 },
+  moduleTitle: { fontSize: 16, fontWeight: 700, color: "#1a1a1a", marginBottom: 2 },
+  moduleDesc: { fontSize: 12, color: "rgba(0,0,0,0.4)", marginBottom: 8 },
   moduleProgress: { display: "flex", alignItems: "center", gap: 10 },
   progressBar: {
-    flex: 1, height: 5, background: "rgba(255,255,255,0.08)",
+    flex: 1, height: 5, background: "rgba(0,0,0,0.06)",
     borderRadius: 3, overflow: "hidden",
   },
   progressFill: {
-    height: "100%", background: "linear-gradient(90deg, #FFD600, #FFA000)",
+    height: "100%", background: "linear-gradient(90deg, #ffdd2d, #FFA000)",
     borderRadius: 3, transition: "width 0.4s",
   },
-  progressText: { fontSize: 11, color: "rgba(255,255,255,0.4)", flexShrink: 0 },
-  moduleArrow: { fontSize: 12, color: "rgba(255,255,255,0.3)", flexShrink: 0 },
+  progressText: { fontSize: 11, color: "rgba(0,0,0,0.4)", flexShrink: 0 },
+  moduleArrow: { fontSize: 12, color: "rgba(0,0,0,0.3)", flexShrink: 0 },
   lessonsList: {
-    borderTop: "1px solid rgba(255,255,255,0.04)",
+    borderTop: "1px solid rgba(0,0,0,0.04)",
     padding: "8px 12px 12px",
   },
   lessonRow: {
@@ -140,11 +141,11 @@ const s = {
     fontSize: 12, fontWeight: 700, color: "#000", flexShrink: 0,
   },
   lessonInfo: { flex: 1 },
-  lessonTitle: { fontSize: 14, fontWeight: 600, color: "#e8eaed" },
-  lessonSub: { fontSize: 12, color: "rgba(255,255,255,0.4)" },
+  lessonTitle: { fontSize: 14, fontWeight: 600, color: "#1a1a1a" },
+  lessonSub: { fontSize: 12, color: "rgba(0,0,0,0.4)" },
   lessonMeta: {
     display: "flex", flexDirection: "column", alignItems: "flex-end",
-    gap: 2, fontSize: 11, color: "rgba(255,255,255,0.4)",
+    gap: 2, fontSize: 11, color: "rgba(0,0,0,0.4)",
   },
   completedBadge: { fontSize: 16, marginLeft: 4 },
 }

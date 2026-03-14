@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { loginUser, registerUser, setUserId } from "../api"
+import { registerUser, loginUser, setUserId } from "../api"
 
 export default function AuthScreen({ onAuth }) {
   const [mode, setMode] = useState("login")
@@ -44,9 +44,7 @@ export default function AuthScreen({ onAuth }) {
       <div style={s.card}>
         {/* Logo */}
         <div style={s.logo}>
-          <span style={{ fontSize: 36 }}>💹</span>
-          <span style={s.logoText}>PULSE</span>
-          <span style={s.version}>2.0</span>
+          <img src="/icons/T-Bank_RU_logo.svg.png" alt="T-Bank" style={{ height: 36 }} />
         </div>
         <div style={s.tagline}>Научись инвестировать, управляя виртуальным портфелем</div>
 
@@ -94,54 +92,49 @@ export default function AuthScreen({ onAuth }) {
 
 const s = {
   page: {
-    background: "#0f1923", display: "flex", alignItems: "center", justifyContent: "center",
+    background: "#f6f7f8", display: "flex", alignItems: "center", justifyContent: "center",
     minHeight: "100vh", padding: 16, fontFamily: "Inter, sans-serif",
   },
   card: {
-    background: "#1a2634", borderRadius: 20, padding: "40px 32px", maxWidth: 420, width: "100%",
-    border: "1px solid rgba(255,255,255,0.06)",
+    background: "#ffffff", borderRadius: 20, padding: "40px 32px", maxWidth: 420, width: "100%",
+    border: "1px solid rgba(0,0,0,0.08)", boxShadow: "0 2px 12px rgba(0,0,0,0.08)",
   },
   logo: {
     display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 8,
   },
-  logoText: { fontSize: 28, fontWeight: 800, color: "#fff", letterSpacing: 3 },
-  version: {
-    fontSize: 11, fontWeight: 700, color: "#FFD600",
-    background: "rgba(255,214,0,0.15)", padding: "2px 6px", borderRadius: 6,
-  },
   tagline: {
-    fontSize: 13, color: "rgba(255,255,255,0.4)", textAlign: "center", marginBottom: 28,
+    fontSize: 13, color: "rgba(0,0,0,0.45)", textAlign: "center", marginBottom: 28,
   },
   title: {
-    fontSize: 20, fontWeight: 700, color: "#fff", marginBottom: 20, textAlign: "center",
+    fontSize: 20, fontWeight: 700, color: "#1a1a1a", marginBottom: 20, textAlign: "center",
   },
   form: { display: "flex", flexDirection: "column", gap: 12 },
   input: {
     padding: "14px 16px", fontSize: 14, borderRadius: 12,
-    border: "1px solid rgba(255,255,255,0.1)", outline: "none",
-    fontFamily: "Inter, sans-serif", background: "rgba(255,255,255,0.04)",
-    color: "#e8eaed",
+    border: "1px solid rgba(0,0,0,0.12)", outline: "none",
+    fontFamily: "Inter, sans-serif", background: "#f6f7f8",
+    color: "#1a1a1a",
   },
   error: {
-    padding: "10px 14px", borderRadius: 8, background: "rgba(239,83,80,0.15)",
-    color: "#ef5350", fontSize: 13,
+    padding: "10px 14px", borderRadius: 8, background: "rgba(244,67,54,0.08)",
+    color: "#f44336", fontSize: 13,
   },
   btn: {
     width: "100%", padding: "14px 0", fontSize: 15, fontWeight: 700,
-    borderRadius: 12, background: "#FFD600", color: "#000", border: "none",
+    borderRadius: 12, background: "#ffdd2d", color: "#1a1a1a", border: "none",
     cursor: "pointer", marginTop: 4, fontFamily: "inherit",
   },
   toggle: {
-    width: "100%", padding: "10px 0", fontSize: 13, color: "rgba(255,255,255,0.4)",
+    width: "100%", padding: "10px 0", fontSize: 13, color: "rgba(0,0,0,0.45)",
     background: "none", border: "none", cursor: "pointer", marginTop: 12,
     fontFamily: "inherit",
   },
   features: {
     display: "flex", justifyContent: "center", gap: 20,
-    marginTop: 28, paddingTop: 20, borderTop: "1px solid rgba(255,255,255,0.06)",
+    marginTop: 28, paddingTop: 20, borderTop: "1px solid rgba(0,0,0,0.06)",
   },
   feature: {
     display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
-    fontSize: 11, color: "rgba(255,255,255,0.4)", textAlign: "center",
+    fontSize: 11, color: "rgba(0,0,0,0.45)", textAlign: "center",
   },
 }
