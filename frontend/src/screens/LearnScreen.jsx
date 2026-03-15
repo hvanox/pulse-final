@@ -28,14 +28,10 @@ export default function LearnScreen({ onStartLesson }) {
   useEffect(() => { loadLessons() }, [])
 
   const handleStartLesson = (lesson) => {
-    if (!lesson.generated) {
-      // Статический урок — открываем как обычно
-      onStartLesson(lesson.id, null)
-    } else if (prefetchedRef.current?.key === lesson.weak_topic) {
-      // AI-урок уже префетчен
+    if (lesson.completed) return // Уже пройден
+    if (prefetchedRef.current?.key === lesson.weak_topic) {
       onStartLesson(lesson.id, { ...lesson, _prefetched: prefetchedRef.current.lesson })
     } else {
-      // AI-урок — генерируем
       onStartLesson(lesson.id, lesson)
     }
   }
@@ -52,14 +48,14 @@ export default function LearnScreen({ onStartLesson }) {
         {lessons.map((lesson, li) => (
           <div key={lesson.id} style={{
             ...s.lessonRow,
-            opacity: lesson.locked ? 0.4 : 1,
-            cursor: lesson.locked ? "default" : "pointer",
-          }} onClick={() => !lesson.locked && handleStartLesson(lesson)}>
+            opacity: lesson.completed ? 0.6 : 1,
+            cursor: lesson.completed ? "default" : "pointer",
+          }} onClick={() => !lesson.completed && handleStartLesson(lesson)}>
             <div style={{
               ...s.lessonDot,
-              background: lesson.completed ? "#21a038" : lesson.locked ? "rgba(0,0,0,0.06)" : lesson.generated ? "#9c27b0" : "#ffdd2d",
+              background: lesson.completed ? "#21a038" : "#9c27b0",
             }}>
-              {lesson.completed ? "✓" : lesson.locked ? "🔒" : lesson.generated ? "🤖" : li + 1}
+              {lesson.completed ? "✓" : li + 1}
             </div>
             <div style={s.lessonInfo}>
               <div style={s.lessonTitle}>{lesson.title}</div>
