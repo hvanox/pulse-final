@@ -435,8 +435,9 @@ def v2_modules(userId: Optional[str] = Query(default=None), current_user: str = 
     user_id = resolve_user_id(userId, current_user)
     db = get_db()
     mastery = ml_engine.compute_mastery_from_db(db, user_id)
+    completed = {r["lesson_id"] for r in db.execute("SELECT lesson_id FROM lesson_completions WHERE user_id=?", (user_id,)).fetchall()}
     db.close()
-    ai_stubs = get_lesson_stubs(mastery)
+    ai_stubs = get_lesson_stubs(mastery, completed)
 
     # Один модуль — всё обучение персональное
     return [{
@@ -514,7 +515,7 @@ def v2_lessons(moduleId: str, userId: Optional[str] = Query(default=None), curre
     all_static_done = all(l["completed"] for l in out)
 
     # AI-уроки — после статических, тоже на основе mastery
-    ai_stubs = get_lesson_stubs(mastery)
+    ai_stubs = get_lesson_stubs(mastery, completed)
     for stub in ai_stubs:
         order = len(out) + 1
         stub["order"] = order
@@ -703,9 +704,10 @@ def dashboard(userId: Optional[str] = Query(default=None), current_user: str = D
 
     # Если все статические пройдены — AI-урок
     if not next_lesson_data:
-        ai_stubs = get_lesson_stubs(mastery)
-        if ai_stubs:
-            stub = ai_stubs[0]
+        ai_stubs = get_lesson_stubs(mastery, completed_ids)
+        # Найти первый непройденный
+        stub = next((s for s in ai_stubs if not s["completed"]), None)
+        if stub:
             next_lesson_data = {
                 "id": stub["id"],
                 "title": stub["title"],

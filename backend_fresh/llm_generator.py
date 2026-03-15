@@ -231,22 +231,61 @@ def analyze_mastery(mastery: dict) -> dict:
     return {"weak": weak, "strong": strong}
 
 
-def get_lesson_stubs(mastery: dict) -> list[dict]:
+def get_lesson_stubs(mastery: dict, completed_ids: set = None) -> list[dict]:
     """
     Возвращает список AI-уроков на основе mastery.
-    Адаптивность:
-    - mastery < 0.3: больше объяснений, лёгкие вопросы
-    - mastery 0.3-0.6: меньше объяснений, средние вопросы
-    - mastery > 0.6: минимум объяснений, сложные вопросы
+    Пройденные уроки показываются + генерируются новые.
     """
+    completed_ids = completed_ids or set()
     analysis = analyze_mastery(mastery)
     weak = analysis["weak"]
     strong = analysis["strong"]
 
+    # Считаем сколько AI-уроков пройдено по каждой теме
+    completed_per_topic = {}
+    for cid in completed_ids:
+        if cid.startswith("ai_") and not cid.startswith("ai_gen_"):
+            parts = cid.split("_")
+            if len(parts) >= 3:
+                topic = parts[1]
+                idx = int(parts[2]) if parts[2].isdigit() else 0
+                completed_per_topic[topic] = max(completed_per_topic.get(topic, 0), idx + 1)
+
     stubs = []
-    for i, w in enumerate(weak[:5]):
+
+    # Сначала добавляем пройденные AI-уроки (чтобы видно было что сделано)
+    for topic, count in completed_per_topic.items():
+        for idx in range(count):
+            stub_id = f"ai_{topic}_{idx}"
+            name = TOPIC_NAMES.get(topic, topic)
+            stubs.append({
+                "id": stub_id,
+                "title": name,
+                "subtitle": f"Пройдено",
+                "duration_min": 5,
+                "xp_reward": 35,
+                "skill": name,
+                "order": len(stubs) + 1,
+                "completed": True,
+                "locked": False,
+                "screen_count": 5,
+                "generated": True,
+                "weak_topic": topic,
+                "strong_topic": topic,
+                "weak_mastery": mastery.get(topic, {}).get("mastery", 0.5),
+            })
+
+    # Теперь новые уроки по слабым темам (ещё не пройденные)
+    for w in weak[:5]:
         m = w["mastery"]
-        # Адаптивность: чем хуже знает — тем длиннее урок
+        # Индекс = сколько уже пройдено по этой теме
+        idx = completed_per_topic.get(w["id"], 0)
+        stub_id = f"ai_{w['id']}_{idx}"
+
+        # Если этот урок уже пройден — пропускаем (он уже в списке выше)
+        if stub_id in completed_ids:
+            continue
+
         if m < 0.3:
             duration = 10
             subtitle = f"Подробное изучение: {w['name']}"
@@ -264,15 +303,15 @@ def get_lesson_stubs(mastery: dict) -> list[dict]:
                 break
 
         stubs.append({
-            "id": f"ai_{w['id']}_{i}",
+            "id": stub_id,
             "title": f"{w['name']}",
             "subtitle": subtitle,
             "duration_min": duration,
             "xp_reward": 35,
             "skill": w["name"],
-            "order": i + 1,
+            "order": len(stubs) + 1,
             "completed": False,
-            "locked": i > 0,  # Только первый разлочен
+            "locked": False,
             "screen_count": 5,
             "generated": True,
             "weak_topic": w["id"],

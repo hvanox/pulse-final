@@ -98,8 +98,11 @@ export default function LessonScreen({ lessonId, aiLessonData, onComplete, onBac
 
   const nextScreen = () => {
     if (isLast) {
-      // Complete lesson
-      completeLesson(lessonId, correctCount, totalQuiz).then(res => {
+      // Complete lesson — для AI-уроков используем stub_id (ai_{topic}_0)
+      const completeId = lesson.generated && lesson.weak_topic
+        ? `ai_${lesson.weak_topic}_0`
+        : lessonId
+      completeLesson(completeId, correctCount, totalQuiz).then(res => {
         setResult(res)
         setCompleted(true)
       })
