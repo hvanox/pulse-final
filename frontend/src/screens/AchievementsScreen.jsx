@@ -62,9 +62,10 @@ export default function AchievementsScreen() {
         {filtered.map(ach => (
           <div key={ach.id} style={{
             ...s.achCard,
-            opacity: ach.unlocked ? 1 : 0.4,
-            background: ach.unlocked ? "rgba(255,221,45,0.05)" : "#f6f7f8",
-            borderColor: ach.unlocked ? "rgba(255,221,45,0.15)" : "rgba(0,0,0,0.04)",
+            opacity: ach.unlocked ? 1 : 0.5,
+            background: ach.unlocked ? "#fff" : "#f0f0f0",
+            borderColor: ach.unlocked ? "rgba(33,160,56,0.2)" : "rgba(0,0,0,0.06)",
+            boxShadow: ach.unlocked ? "0 2px 12px rgba(33,160,56,0.1)" : "none",
           }}>
             <div style={s.achIcon}>{ach.unlocked ? ach.icon : "🔒"}</div>
             <div style={s.achName}>{ach.name}</div>
@@ -87,32 +88,32 @@ const s = {
   loading: { color: "rgba(0,0,0,0.45)", padding: 40, textAlign: "center" },
   header: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 },
   title: { fontSize: 28, fontWeight: 800, color: "#1a1a1a" },
-  counter: { fontSize: 18, fontWeight: 700, color: "#ffdd2d" },
+  counter: { fontSize: 18, fontWeight: 700, color: "#b8860b" },
   progressBox: { marginBottom: 20 },
   progressBar: {
-    height: 8, background: "rgba(0,0,0,0.06)", borderRadius: 4, overflow: "hidden", marginBottom: 4,
+    height: 8, background: "rgba(0,0,0,0.08)", borderRadius: 4, overflow: "hidden", marginBottom: 6,
   },
   progressFill: {
     height: "100%", background: "linear-gradient(90deg, #ffdd2d, #FFA000)",
     borderRadius: 4, transition: "width 0.5s",
   },
-  progressText: { fontSize: 12, color: "rgba(0,0,0,0.4)" },
-  filters: { display: "flex", gap: 4, marginBottom: 20, flexWrap: "wrap" },
+  progressText: { fontSize: 12, color: "rgba(0,0,0,0.5)" },
+  filters: { display: "flex", gap: 6, marginBottom: 20, flexWrap: "wrap" },
   filterBtn: {
-    padding: "6px 14px", border: "1px solid rgba(0,0,0,0.06)", borderRadius: 8,
-    background: "transparent", color: "rgba(0,0,0,0.45)", fontSize: 12,
-    cursor: "pointer", fontFamily: "inherit",
+    padding: "8px 16px", border: "1px solid rgba(0,0,0,0.1)", borderRadius: 10,
+    background: "#fff", color: "rgba(0,0,0,0.55)", fontSize: 13,
+    cursor: "pointer", fontFamily: "inherit", fontWeight: 500,
   },
-  filterActive: { background: "rgba(255,221,45,0.1)", color: "#ffdd2d", borderColor: "rgba(255,221,45,0.2)" },
-  grid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 12 },
+  filterActive: { background: "#1a1a1a", color: "#fff", borderColor: "#1a1a1a" },
+  grid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 14 },
   achCard: {
-    borderRadius: 14, padding: "20px 16px", textAlign: "center",
-    border: "1px solid rgba(0,0,0,0.04)", transition: "all 0.2s",
-    boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
+    borderRadius: 16, padding: "24px 18px", textAlign: "center",
+    border: "1px solid rgba(0,0,0,0.08)", transition: "all 0.2s",
+    boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
   },
-  achIcon: { fontSize: 36, marginBottom: 8 },
-  achName: { fontSize: 14, fontWeight: 700, color: "#1a1a1a", marginBottom: 4 },
-  achDesc: { fontSize: 11, color: "rgba(0,0,0,0.4)", marginBottom: 8, lineHeight: 1.4 },
-  achDate: { fontSize: 10, color: "rgba(0,0,0,0.3)", marginBottom: 4 },
-  achXp: { fontSize: 11, color: "#ffdd2d", fontWeight: 600 },
+  achIcon: { fontSize: 40, marginBottom: 10 },
+  achName: { fontSize: 15, fontWeight: 700, color: "#1a1a1a", marginBottom: 6 },
+  achDesc: { fontSize: 12, color: "rgba(0,0,0,0.55)", marginBottom: 10, lineHeight: 1.5 },
+  achDate: { fontSize: 11, color: "rgba(0,0,0,0.4)", marginBottom: 6 },
+  achXp: { fontSize: 12, color: "#b8860b", fontWeight: 700 },
 }
