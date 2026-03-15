@@ -28,10 +28,14 @@ export default function LearnScreen({ onStartLesson }) {
   useEffect(() => { loadLessons() }, [])
 
   const handleStartLesson = (lesson) => {
-    // Если урок уже префетчен — передаём готовые данные
-    if (prefetchedRef.current?.key === lesson.weak_topic) {
+    if (!lesson.generated) {
+      // Статический урок — открываем как обычно
+      onStartLesson(lesson.id, null)
+    } else if (prefetchedRef.current?.key === lesson.weak_topic) {
+      // AI-урок уже префетчен
       onStartLesson(lesson.id, { ...lesson, _prefetched: prefetchedRef.current.lesson })
     } else {
+      // AI-урок — генерируем
       onStartLesson(lesson.id, lesson)
     }
   }
@@ -53,9 +57,9 @@ export default function LearnScreen({ onStartLesson }) {
           }} onClick={() => !lesson.locked && handleStartLesson(lesson)}>
             <div style={{
               ...s.lessonDot,
-              background: lesson.locked ? "rgba(0,0,0,0.06)" : "#9c27b0",
+              background: lesson.completed ? "#21a038" : lesson.locked ? "rgba(0,0,0,0.06)" : lesson.generated ? "#9c27b0" : "#ffdd2d",
             }}>
-              {lesson.locked ? "🔒" : li + 1}
+              {lesson.completed ? "✓" : lesson.locked ? "🔒" : lesson.generated ? "🤖" : li + 1}
             </div>
             <div style={s.lessonInfo}>
               <div style={s.lessonTitle}>{lesson.title}</div>

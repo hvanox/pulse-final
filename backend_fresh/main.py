@@ -458,17 +458,50 @@ def v2_modules(userId: Optional[str] = Query(default=None), current_user: str = 
 
 @app.get("/v2/lessons")
 def v2_lessons(moduleId: str, userId: Optional[str] = Query(default=None), current_user: str = Depends(get_current_user)):
-    """Уроки генерируются на основе mastery. Запускает предгенерацию в фоне."""
+    """Сначала статические уроки, потом AI-уроки на основе mastery."""
     user_id = resolve_user_id(userId, current_user)
     db = get_db()
+    completed = {r["lesson_id"] for r in db.execute("SELECT lesson_id FROM lesson_completions WHERE user_id=?", (user_id,)).fetchall()}
     mastery = ml_engine.compute_mastery_from_db(db, user_id)
     db.close()
-    stubs = get_lesson_stubs(mastery)
 
-    # Запускаем предгенерацию в фоне — к моменту клика урок будет готов
-    threading.Thread(target=_pregenerate_lessons_bg, args=(user_id,), daemon=True).start()
+    out = []
+    order = 0
 
-    return stubs
+    # 1. Статические уроки (все модули) — идут первыми
+    for module in MODULES:
+        for lesson in get_module_lessons(module["id"]):
+            order += 1
+            out.append({
+                "id": lesson["id"],
+                "title": lesson["title"],
+                "subtitle": lesson["subtitle"],
+                "duration_min": lesson["duration_min"],
+                "xp_reward": lesson["xp_reward"],
+                "skill": lesson["skill"],
+                "order": order,
+                "completed": lesson["id"] in completed,
+                "locked": order > 1 and out[-1]["id"] not in completed and not out[-1].get("completed"),
+                "screen_count": len(lesson["screens"]),
+                "generated": False,
+            })
+
+    # Все статические пройдены?
+    all_static_done = all(l["completed"] for l in out)
+
+    # 2. AI-уроки — после статических
+    ai_stubs = get_lesson_stubs(mastery)
+    for stub in ai_stubs:
+        order += 1
+        stub["order"] = order
+        stub["locked"] = not all_static_done  # AI-уроки разлочены только когда статика пройдена
+        out.append(stub)
+
+    # Предгенерация в фоне
+    if all_static_done:
+        threading.Thread(target=_pregenerate_lessons_bg, args=(user_id,), daemon=True).start()
+
+    return out
 
 
 def _pregenerate_lessons_bg(user_id: str):
@@ -637,26 +670,47 @@ def dashboard(userId: Optional[str] = Query(default=None), current_user: str = D
     ach_count = db.execute("SELECT COUNT(*) AS cnt FROM user_achievements WHERE user_id=?", (user_id,)).fetchone()["cnt"]
     completed_ids = {r["lesson_id"] for r in db.execute("SELECT lesson_id FROM lesson_completions WHERE user_id=?", (user_id,)).fetchall()}
 
-    # Next lesson — AI-урок на основе mastery
-    mastery = ml_engine.compute_mastery_from_db(db, user_id)
-    ai_stubs = get_lesson_stubs(mastery)
+    # Next lesson — сначала статический, потом AI
     next_lesson_data = None
-    if ai_stubs:
-        stub = ai_stubs[0]
-        next_lesson_data = {
-            "id": stub["id"],
-            "title": stub["title"],
-            "subtitle": stub["subtitle"],
-            "duration_min": stub["duration_min"],
-            "xp_reward": stub["xp_reward"],
-            "module_title": "Твоё обучение",
-            "module_icon": "🧠",
-            "generated": True,
-            "weak_topic": stub["weak_topic"],
-            "strong_topic": stub["strong_topic"],
-        }
-        # Предгенерация в фоне
-        threading.Thread(target=_pregenerate_lessons_bg, args=(user_id,), daemon=True).start()
+    # Ищем незавершённый статический урок
+    for module in MODULES:
+        if user_level < module["required_level"]:
+            continue
+        for lesson in get_module_lessons(module["id"]):
+            if lesson["id"] not in completed_ids:
+                next_lesson_data = {
+                    "id": lesson["id"],
+                    "title": lesson["title"],
+                    "subtitle": lesson["subtitle"],
+                    "duration_min": lesson["duration_min"],
+                    "xp_reward": lesson["xp_reward"],
+                    "module_title": module["title"],
+                    "module_icon": module["icon"],
+                    "generated": False,
+                }
+                break
+        if next_lesson_data:
+            break
+
+    # Если все статические пройдены — AI-урок
+    if not next_lesson_data:
+        mastery = ml_engine.compute_mastery_from_db(db, user_id)
+        ai_stubs = get_lesson_stubs(mastery)
+        if ai_stubs:
+            stub = ai_stubs[0]
+            next_lesson_data = {
+                "id": stub["id"],
+                "title": stub["title"],
+                "subtitle": stub["subtitle"],
+                "duration_min": stub["duration_min"],
+                "xp_reward": stub["xp_reward"],
+                "module_title": "Твоё обучение",
+                "module_icon": "🧠",
+                "generated": True,
+                "weak_topic": stub["weak_topic"],
+                "strong_topic": stub["strong_topic"],
+            }
+            threading.Thread(target=_pregenerate_lessons_bg, args=(user_id,), daemon=True).start()
 
     # Daily missions
     today = date.today().isoformat()
