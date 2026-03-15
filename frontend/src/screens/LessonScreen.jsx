@@ -16,6 +16,7 @@ export default function LessonScreen({ lessonId, aiLessonData, onComplete, onBac
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    let cancelled = false
     setLoading(true)
 
     // AI-урок: из префетча или генерируем
@@ -29,6 +30,7 @@ export default function LessonScreen({ lessonId, aiLessonData, onComplete, onBac
     }
 
     loadPromise.then(async (l) => {
+      if (cancelled) return
       // AI-уроки уже содержат все вопросы — пропускаем адаптивные
       if (l.generated) {
         setLesson(l)
@@ -72,13 +74,19 @@ export default function LessonScreen({ lessonId, aiLessonData, onComplete, onBac
           l = { ...l, screens }
         }
       } catch {}
-      setLesson(l)
-      setLoading(false)
-    }).catch(() => setLoading(false))
+      if (!cancelled) { setLesson(l); setLoading(false) }
+    }).catch(() => { if (!cancelled) setLoading(false) })
+
+    return () => { cancelled = true }
   }, [lessonId])
 
   if (loading || !lesson) {
-    return <div style={s.loading}>Загрузка урока...</div>
+    return (
+      <div style={s.loading}>
+        <div>Генерируем урок...</div>
+        <button style={{ ...s.backBtn, marginTop: 16 }} onClick={onBack}>← Назад</button>
+      </div>
+    )
   }
 
   const screens = lesson.screens || []
