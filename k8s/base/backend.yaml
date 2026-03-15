@@ -1,0 +1,116 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pulse-backend
+  labels:
+    app: pulse-backend
+    version: latest
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: pulse-backend
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: pulse-backend
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/metrics"
+        prometheus.io/port: "8000"
+    spec:
+      containers:
+        - name: backend
+          image: ghcr.io/pulse/backend:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
+          env:
+            - name: REDIS_URL
+              value: "redis://redis:6379/0"
+            - name: DB_PATH
+              value: "/app/data/pulse_fresh.db"
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: pulse-secrets
+                  key: jwt-secret
+            - name: OPENROUTER_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: pulse-secrets
+                  key: openrouter-api-key
+                  optional: true
+            - name: CORS_ORIGINS
+              valueFrom:
+                configMapKeyRef:
+                  name: pulse-config
+                  key: cors-origins
+          resources:
+            requests:
+              cpu: "200m"
+              memory: "256Mi"
+            limits:
+              cpu: "1000m"
+              memory: "512Mi"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 20
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 3
+          volumeMounts:
+            - name: backend-data
+              mountPath: /app/data
+      volumes:
+        - name: backend-data
+          persistentVolumeClaim:
+            claimName: backend-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pulse-backend
+  labels:
+    app: pulse-backend
+spec:
+  selector:
+    app: pulse-backend
+  ports:
+    - port: 8000
+      targetPort: 8000
+      name: http
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: backend-pvc
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: pulse-backend-pdb
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: pulse-backend

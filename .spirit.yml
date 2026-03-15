@@ -1,0 +1,211 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Spirit CI/CD — Т-Банк
+# Platform: https://spirit.tinkoff.ru
+# Docs:     https://spirit.tinkoff.ru/docs
+# ─────────────────────────────────────────────────────────────────────────────
+
+name: pulse
+version: "1"
+
+# ── Окружения ─────────────────────────────────────────────────────────────────
+environments:
+  dev:
+    namespace: pulse-dev
+    cluster: k8s-dev
+    domain: pulse-dev.tinkoff.ru
+  stage:
+    namespace: pulse-stage
+    cluster: k8s-stage
+    domain: pulse-stage.tinkoff.ru
+  prod:
+    namespace: pulse-prod
+    cluster: k8s-prod
+    domain: pulse.tinkoff.ru
+
+# ── Сервисы ───────────────────────────────────────────────────────────────────
+services:
+  backend:
+    type: http
+    dockerfile: backend_fresh/Dockerfile
+    context: backend_fresh
+    port: 8000
+    resources:
+      requests:
+        cpu: "200m"
+        memory: "256Mi"
+      limits:
+        cpu: "1000m"
+        memory: "512Mi"
+    replicas:
+      dev: 1
+      stage: 1
+      prod: 2
+    health_check:
+      path: /health
+      interval: 30s
+      timeout: 10s
+    env:
+      - name: REDIS_URL
+        value: "redis://redis:6379/0"
+      - name: JWT_SECRET
+        secret: pulse/jwt-secret
+      - name: OPENROUTER_API_KEY
+        secret: pulse/openrouter-api-key
+      - name: CORS_ORIGINS
+        value: "https://${DOMAIN}"
+    volumes:
+      - name: backend-data
+        mount: /app/data
+        size: 5Gi
+
+  frontend:
+    type: static
+    dockerfile: frontend/Dockerfile
+    context: frontend
+    port: 80
+    build_args:
+      VITE_API_URL: "https://${DOMAIN}/api"
+    resources:
+      requests:
+        cpu: "50m"
+        memory: "64Mi"
+      limits:
+        cpu: "200m"
+        memory: "128Mi"
+    replicas:
+      dev: 1
+      stage: 1
+      prod: 2
+
+  redis:
+    type: managed
+    image: redis:7.4-alpine
+    port: 6379
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "128Mi"
+      limits:
+        cpu: "500m"
+        memory: "256Mi"
+    persistence:
+      size: 2Gi
+
+# ── Пайплайн ──────────────────────────────────────────────────────────────────
+pipeline:
+  triggers:
+    - branch: main
+      env: prod
+      require_approval: true
+    - branch: develop
+      env: stage
+    - branch: "feature/*"
+      env: dev
+
+  stages:
+    # ── 1. Линтинг и проверка кода ───────────────────────────────────────────
+    - name: lint
+      parallel: true
+      steps:
+        - name: lint-backend
+          image: python:3.12-slim
+          script: |
+            pip install ruff --quiet
+            ruff check backend_fresh/ --output-format=github
+          cache:
+            key: pip-${{ hashFiles('requirements.txt') }}
+            paths: [~/.cache/pip]
+
+        - name: lint-frontend
+          image: node:20-alpine
+          working_dir: frontend
+          script: |
+            npm ci --prefer-offline
+            npm run lint
+          cache:
+            key: npm-${{ hashFiles('frontend/package-lock.json') }}
+            paths: [frontend/node_modules]
+
+    # ── 2. Тесты ─────────────────────────────────────────────────────────────
+    - name: test
+      parallel: true
+      steps:
+        - name: test-backend
+          image: python:3.12-slim
+          script: |
+            pip install -r requirements.txt --quiet
+            pip install pytest pytest-asyncio --quiet
+            pytest ml/ -v --tb=short
+          cache:
+            key: pip-${{ hashFiles('requirements.txt') }}
+            paths: [~/.cache/pip]
+
+        - name: test-ml
+          image: python:3.12-slim
+          script: |
+            pip install -r requirements.txt --quiet
+            pip install pytest --quiet
+            pytest ml/tests/ -v --tb=short
+          cache:
+            key: pip-${{ hashFiles('requirements.txt') }}
+            paths: [~/.cache/pip]
+
+    # ── 3. Сборка Docker образов ─────────────────────────────────────────────
+    - name: build
+      parallel: true
+      steps:
+        - name: build-backend
+          uses: spirit/docker-build@v2
+          with:
+            context: backend_fresh
+            image: "pulse/backend:${{ git.sha }}"
+            push: true
+            cache_from: "pulse/backend:latest"
+
+        - name: build-frontend
+          uses: spirit/docker-build@v2
+          with:
+            context: frontend
+            image: "pulse/frontend:${{ git.sha }}"
+            push: true
+            cache_from: "pulse/frontend:latest"
+            build_args:
+              VITE_API_URL: "https://${{ env.DOMAIN }}/api"
+
+    # ── 4. Деплой ────────────────────────────────────────────────────────────
+    - name: deploy
+      steps:
+        - name: deploy-to-k8s
+          uses: spirit/helm-deploy@v2
+          with:
+            chart: ./k8s/helm
+            release: pulse
+            namespace: "${{ env.NAMESPACE }}"
+            values:
+              backend.image: "pulse/backend:${{ git.sha }}"
+              frontend.image: "pulse/frontend:${{ git.sha }}"
+              ingress.host: "${{ env.DOMAIN }}"
+
+    # ── 5. Smoke-тест после деплоя ───────────────────────────────────────────
+    - name: smoke
+      steps:
+        - name: health-check
+          image: curlimages/curl:8
+          script: |
+            sleep 10
+            curl -f "https://${{ env.DOMAIN }}/health" || exit 1
+            curl -f "https://${{ env.DOMAIN }}/api/health" || exit 1
+          timeout: 120s
+
+# ── Уведомления ───────────────────────────────────────────────────────────────
+notifications:
+  slack:
+    channel: "#pulse-deploys"
+    on:
+      success: ["prod"]
+      failure: ["dev", "stage", "prod"]
+  telegram:
+    chat_id: "${{ secrets.TG_CHAT_ID }}"
+    bot_token: "${{ secrets.TG_BOT_TOKEN }}"
+    on:
+      failure: ["prod"]

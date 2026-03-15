@@ -1,3 +1,30 @@
+/* Tailwind CSS v4 */
+@import "tailwindcss";
+
+/* Custom Tailwind theme tokens — mapped to existing CSS vars */
+@theme {
+  --color-accent: #ffdd2d;
+  --color-accent-bg: rgba(255, 221, 45, 0.12);
+  --color-surface: #ffffff;
+  --color-bg: #f6f7f8;
+  --color-green: #21a038;
+  --color-red: #f44336;
+  --color-text: #1a1a1a;
+  --color-text-dim: rgba(0, 0, 0, 0.55);
+  --color-text-muted: rgba(0, 0, 0, 0.35);
+  --color-border: rgba(0, 0, 0, 0.08);
+
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+
+  --radius-card: 16px;
+  --radius-btn: 12px;
+
+  --animate-fade-in: fadeIn 0.3s ease forwards;
+  --animate-slide-up: slideUp 0.4s ease forwards;
+  --animate-pulse-glow: pulse-glow-anim 2s ease-in-out infinite;
+  --animate-spin-slow: spin 3s linear infinite;
+}
+
 :root {
   --bg: #f6f7f8;
   --card: #ffffff;
@@ -110,33 +137,83 @@ input[type="range"]::-moz-range-thumb {
   border: none;
 }
 
-/* Animations */
+/* ── Keyframe animations ───────────────────────────────────────────────────── */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes pulse-glow-anim {
   0%, 100% { box-shadow: 0 4px 20px rgba(255, 221, 45, 0.15); }
-  50% { box-shadow: 0 4px 30px rgba(255, 221, 45, 0.3), 0 0 0 6px rgba(255, 221, 45, 0.06); }
+  50%       { box-shadow: 0 4px 30px rgba(255, 221, 45, 0.3), 0 0 0 6px rgba(255, 221, 45, 0.06); }
 }
 
 @keyframes slideUp {
   from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(-16px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.92); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes shimmer {
+  from { background-position: -200% 0; }
+  to   { background-position: 200% 0; }
 }
 
 @keyframes spin {
   from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  to   { transform: rotate(360deg); }
 }
 
-.fade-in {
-  animation: fadeIn 0.3s ease forwards;
+@keyframes bounceIn {
+  0%   { opacity: 0; transform: scale(0.3); }
+  50%  { opacity: 1; transform: scale(1.05); }
+  70%  { transform: scale(0.9); }
+  100% { transform: scale(1); }
 }
 
-.pulse-glow {
-  animation: pulse-glow-anim 2s ease-in-out infinite;
+@keyframes confetti-fall {
+  0%   { transform: translateY(-10px) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+}
+
+/* ── Utility animation classes ─────────────────────────────────────────────── */
+.fade-in    { animation: fadeIn 0.3s ease forwards; }
+.slide-up   { animation: slideUp 0.4s ease forwards; }
+.slide-in   { animation: slideIn 0.3s ease forwards; }
+.scale-in   { animation: scaleIn 0.25s ease forwards; }
+.bounce-in  { animation: bounceIn 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) forwards; }
+
+.pulse-glow { animation: pulse-glow-anim 2s ease-in-out infinite; }
+
+/* Staggered children */
+.stagger > * { opacity: 0; }
+.stagger > *:nth-child(1)  { animation: fadeIn 0.3s 0.05s ease forwards; }
+.stagger > *:nth-child(2)  { animation: fadeIn 0.3s 0.10s ease forwards; }
+.stagger > *:nth-child(3)  { animation: fadeIn 0.3s 0.15s ease forwards; }
+.stagger > *:nth-child(4)  { animation: fadeIn 0.3s 0.20s ease forwards; }
+.stagger > *:nth-child(5)  { animation: fadeIn 0.3s 0.25s ease forwards; }
+.stagger > *:nth-child(6)  { animation: fadeIn 0.3s 0.30s ease forwards; }
+.stagger > *:nth-child(n+7){ animation: fadeIn 0.3s 0.35s ease forwards; }
+
+/* Skeleton shimmer */
+.skeleton {
+  background: linear-gradient(90deg,
+    rgba(0,0,0,0.05) 25%,
+    rgba(0,0,0,0.10) 50%,
+    rgba(0,0,0,0.05) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 8px;
 }
 
 /* Remove focus outline on buttons */

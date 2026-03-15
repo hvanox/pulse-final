@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pulse-frontend
+  labels:
+    app: pulse-frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: pulse-frontend
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: pulse-frontend
+    spec:
+      containers:
+        - name: frontend
+          image: ghcr.io/pulse/frontend:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "200m"
+              memory: "128Mi"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 3
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pulse-frontend
+  labels:
+    app: pulse-frontend
+spec:
+  selector:
+    app: pulse-frontend
+  ports:
+    - port: 80
+      targetPort: 80
+      name: http

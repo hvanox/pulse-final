@@ -1,10 +1,14 @@
-fastapi
-uvicorn[standard]
-pydantic
-email-validator
-bcrypt
-PyJWT
-numpy
-scikit-learn
-openai
-python-dotenv
+fastapi>=0.115.0
+uvicorn[standard]>=0.32.0
+pydantic>=2.9.0
+pydantic[email]
+bcrypt>=4.2.0
+PyJWT>=2.9.0
+numpy>=2.1.0
+scikit-learn>=1.5.0
+openai>=1.54.0
+python-dotenv>=1.0.1
+# Redis
+redis>=5.2.0
+# HTTP client for health checks / external calls
+httpx>=0.27.0

@@ -1,14 +1,51 @@
+# Python
 __pycache__/
-*.pyc
+*.py[cod]
 *.pyo
 *.pyd
 .Python
 env/
 venv/
+.venv/
 *.egg-info/
 dist/
 build/
-.DS_Store
+.pytest_cache/
+.ruff_cache/
+
+# Database
 *.db
 *.sqlite3
+data/
+
+# ML models
+ml/models/*.pkl
+ml/models/*.joblib
+backend_fresh/ml/models/
+
+# Environment
+.env
 .env.local
+.env.production
+.env.staging
+# (keep .env.example)
+
+# Node
+node_modules/
+frontend/dist/
+
+# Docker
+.docker/
+
+# macOS
+.DS_Store
+*.DS_Store
+
+# k8s secrets (real values — use sealed secrets instead)
+k8s/**/secrets.yaml
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo

@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pulse-config
+data:
+  cors-origins: "https://pulse.tinkoff.ru"
+  jwt-expires-min: "180"
+  start-balance: "1000000"
