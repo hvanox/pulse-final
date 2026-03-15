@@ -16,7 +16,7 @@ export default function LessonScreen({ lessonId, aiLessonData, onComplete, onBac
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    let cancelled = false
+    const abortController = new AbortController()
     setLoading(true)
 
     // AI-урок: из префетча или генерируем
@@ -24,13 +24,13 @@ export default function LessonScreen({ lessonId, aiLessonData, onComplete, onBac
     if (aiLessonData?._prefetched) {
       loadPromise = Promise.resolve(aiLessonData._prefetched)
     } else if (aiLessonData?.generated) {
-      loadPromise = generateLesson(aiLessonData.weak_topic, aiLessonData.strong_topic)
+      loadPromise = generateLesson(aiLessonData.weak_topic, aiLessonData.strong_topic, abortController.signal)
     } else {
       loadPromise = getLessonDetail(lessonId)
     }
 
     loadPromise.then(async (l) => {
-      if (cancelled) return
+      if (abortController.signal.aborted) return
       // AI-уроки уже содержат все вопросы — пропускаем адаптивные
       if (l.generated) {
         setLesson(l)
@@ -74,10 +74,10 @@ export default function LessonScreen({ lessonId, aiLessonData, onComplete, onBac
           l = { ...l, screens }
         }
       } catch {}
-      if (!cancelled) { setLesson(l); setLoading(false) }
-    }).catch(() => { if (!cancelled) setLoading(false) })
+      if (!abortController.signal.aborted) { setLesson(l); setLoading(false) }
+    }).catch(() => { if (!abortController.signal.aborted) setLoading(false) })
 
-    return () => { cancelled = true }
+    return () => { abortController.abort() }
   }, [lessonId])
 
   if (loading || !lesson) {

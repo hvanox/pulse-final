@@ -35,6 +35,9 @@ async function apiFetch(url, options = {}) {
     }
     return await res.json()
   } catch (err) {
+    if (err.name === "AbortError") {
+      throw err // Не оборачиваем abort — пусть тихо пропадёт
+    }
     if (err.name === "TypeError" && err.message === "Failed to fetch") {
       throw new Error("Сервер недоступен. Проверьте соединение с интернетом.")
     }
@@ -107,7 +110,7 @@ export const recordAdaptiveAnswer = (topic, questionId, isCorrect, timeMs = 0, s
 
 // ─── LLM-Generated Questions & Lessons ───
 export const generateQuestion = (topic = null) => apiFetch(`${BASE}/adaptive/generate-question?userId=${USER_ID}${topic ? `&topic=${topic}` : ''}`)
-export const generateLesson = (weakTopic = null, strongTopic = null) => apiFetch(`${BASE}/v2/generate-lesson?userId=${USER_ID}${weakTopic ? `&weakTopic=${weakTopic}` : ''}${strongTopic ? `&strongTopic=${strongTopic}` : ''}`)
+export const generateLesson = (weakTopic = null, strongTopic = null, signal = null) => apiFetch(`${BASE}/v2/generate-lesson?userId=${USER_ID}${weakTopic ? `&weakTopic=${weakTopic}` : ''}${strongTopic ? `&strongTopic=${strongTopic}` : ''}`, signal ? { signal } : {})
 
 // ─── Legacy ───
 export const getExperience = () => apiFetch(`${BASE}/experience?userId=${USER_ID}`)
