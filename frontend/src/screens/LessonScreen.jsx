@@ -82,9 +82,11 @@ export default function LessonScreen({ lessonId, aiLessonData, onComplete, onBac
 
   if (loading || !lesson) {
     return (
-      <div style={s.loading}>
-        <div>Генерируем урок...</div>
-        <button style={{ ...s.backBtn, marginTop: 16 }} onClick={onBack}>← Назад</button>
+      <div style={s.loadingScreen}>
+        <div style={s.spinner} />
+        <div style={s.loadingTitle}>Генерируем урок...</div>
+        <div style={s.loadingSubtitle}>ИИ подбирает материал под тебя</div>
+        <button style={s.loadingBackBtn} onClick={onBack}>← Назад</button>
       </div>
     )
   }
@@ -761,9 +763,33 @@ function ItemsVisual({ items }) {
 
 // ─── Styles ───
 
+// Inject spinner keyframes once
+if (typeof document !== "undefined" && !document.getElementById("spinner-keyframes")) {
+  const style = document.createElement("style")
+  style.id = "spinner-keyframes"
+  style.textContent = `@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`
+  document.head.appendChild(style)
+}
+
 const s = {
   page: { maxWidth: 680, margin: "0 auto" },
   loading: { color: "rgba(0,0,0,0.45)", padding: 60, textAlign: "center", fontSize: 16 },
+  loadingScreen: {
+    display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+    minHeight: "60vh", textAlign: "center",
+  },
+  spinner: {
+    width: 48, height: 48, border: "4px solid rgba(0,0,0,0.08)",
+    borderTop: "4px solid #9c27b0", borderRadius: "50%",
+    animation: "spin 1s linear infinite", marginBottom: 24,
+  },
+  loadingTitle: { fontSize: 20, fontWeight: 700, color: "#1a1a1a", marginBottom: 8 },
+  loadingSubtitle: { fontSize: 14, color: "rgba(0,0,0,0.4)", marginBottom: 24 },
+  loadingBackBtn: {
+    padding: "10px 24px", border: "1px solid rgba(0,0,0,0.12)", borderRadius: 10,
+    background: "transparent", color: "rgba(0,0,0,0.5)", fontSize: 14,
+    cursor: "pointer", fontFamily: "inherit",
+  },
   topBar: { display: "flex", alignItems: "center", gap: 12, marginBottom: 24 },
   backBtn: {
     background: "transparent", border: "none", color: "rgba(0,0,0,0.45)",
