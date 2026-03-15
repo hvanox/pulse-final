@@ -12,8 +12,11 @@ import Tutorial from "./components/Tutorial"
 import { setUserId, getOnboardingStatus, loginUser, clearAuth } from "./api"
 
 export default function App() {
-  const [screen, setScreen] = useState("home")
-  const [tab, setTab] = useState("home")
+  const validTabs = ["home", "portfolio", "learn", "achievements", "settings"]
+  const savedTab = localStorage.getItem("pulse_tab") || "home"
+  const initialTab = validTabs.includes(savedTab) ? savedTab : "home"
+  const [screen, setScreen] = useState(initialTab)
+  const [tab, setTab] = useState(initialTab)
   const [user, setUser] = useState(null)
   const [lessonId, setLessonId] = useState(null)
   const [aiLessonData, setAiLessonData] = useState(null)
@@ -79,6 +82,7 @@ export default function App() {
   const handleNavigate = (id) => {
     setTab(id)
     setScreen(id)
+    localStorage.setItem("pulse_tab", id)
   }
 
   const handleStartLesson = (id, aiData = null) => {
@@ -91,6 +95,7 @@ export default function App() {
     setRefreshKey(k => k + 1)
     setScreen("learn")
     setTab("learn")
+    localStorage.setItem("pulse_tab", "learn")
   }
 
   const handleBack = () => {
