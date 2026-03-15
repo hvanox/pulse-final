@@ -233,27 +233,39 @@ def analyze_mastery(mastery: dict) -> dict:
 
 def get_lesson_stubs(mastery: dict, completed_ids: set = None) -> list[dict]:
     """
-    Возвращает список AI-уроков на основе mastery.
-    Пройденные уроки показываются + генерируются новые.
+    ВСЕ темы получают уроки:
+    - Слабые (mastery < 0.5): из БД (лёгкие), потом ИИ генерирует следующие
+    - Сильные (mastery >= 0.5): ИИ генерирует сложные уроки
+    Пройденные показываются с галочкой.
     """
     completed_ids = completed_ids or set()
-    analysis = analyze_mastery(mastery)
-    weak = analysis["weak"]
-    strong = analysis["strong"]
 
-    # Считаем сколько AI-уроков пройдено по каждой теме
+    # Считаем пройденные AI-уроки по темам
     completed_per_topic = {}
     for cid in completed_ids:
         if cid.startswith("ai_") and not cid.startswith("ai_gen_"):
             parts = cid.split("_")
             if len(parts) >= 3:
-                topic = parts[1]
-                idx = int(parts[2]) if parts[2].isdigit() else 0
+                topic = "_".join(parts[1:-1])  # для topic вроде market_logic
+                idx = int(parts[-1]) if parts[-1].isdigit() else 0
                 completed_per_topic[topic] = max(completed_per_topic.get(topic, 0), idx + 1)
+
+    # Сортируем все темы: слабые первыми, сильные потом
+    all_topics = []
+    for topic_id, data in mastery.items():
+        m = data.get("mastery", 0.0)
+        name = TOPIC_NAMES.get(topic_id, topic_id)
+        all_topics.append({"id": topic_id, "name": name, "mastery": m})
+    all_topics.sort(key=lambda x: x["mastery"])
+
+    # Если mastery пустой — все темы
+    if not all_topics:
+        for tid, tname in TOPIC_NAMES.items():
+            all_topics.append({"id": tid, "name": tname, "mastery": 0.0})
 
     stubs = []
 
-    # Сначала добавляем пройденные AI-уроки (чтобы видно было что сделано)
+    # 1. Пройденные уроки (с галочкой)
     for topic, count in completed_per_topic.items():
         for idx in range(count):
             stub_id = f"ai_{topic}_{idx}"
@@ -261,7 +273,7 @@ def get_lesson_stubs(mastery: dict, completed_ids: set = None) -> list[dict]:
             stubs.append({
                 "id": stub_id,
                 "title": name,
-                "subtitle": f"Пройдено",
+                "subtitle": "Пройдено",
                 "duration_min": 5,
                 "xp_reward": 35,
                 "skill": name,
@@ -275,47 +287,53 @@ def get_lesson_stubs(mastery: dict, completed_ids: set = None) -> list[dict]:
                 "weak_mastery": mastery.get(topic, {}).get("mastery", 0.5),
             })
 
-    # Теперь новые уроки по слабым темам (ещё не пройденные)
-    for w in weak[:5]:
-        m = w["mastery"]
-        # Индекс = сколько уже пройдено по этой теме
-        idx = completed_per_topic.get(w["id"], 0)
-        stub_id = f"ai_{w['id']}_{idx}"
+    # 2. Новые уроки по ВСЕМ темам
+    for t in all_topics:
+        m = t["mastery"]
+        idx = completed_per_topic.get(t["id"], 0)
+        stub_id = f"ai_{t['id']}_{idx}"
 
-        # Если этот урок уже пройден — пропускаем (он уже в списке выше)
         if stub_id in completed_ids:
             continue
 
         if m < 0.3:
+            subtitle = f"Изучаем с нуля: {t['name']}"
             duration = 10
-            subtitle = f"Подробное изучение: {w['name']}"
-        elif m < 0.6:
+        elif m < 0.5:
+            subtitle = f"Закрепляем: {t['name']}"
             duration = 7
-            subtitle = f"Закрепляем: {w['name']}"
+        elif m < 0.7:
+            subtitle = f"Углубляем: {t['name']}"
+            duration = 6
         else:
+            subtitle = f"Продвинутый уровень: {t['name']}"
             duration = 5
-            subtitle = f"Углубляем: {w['name']}"
 
-        strong_topic = None
-        for s in strong:
-            if s["id"] != w["id"]:
-                strong_topic = s
-                break
+        # Для сильных тем — strong_topic = сама тема (сложные вопросы)
+        # Для слабых — strong_topic = самая сильная другая тема
+        if m >= 0.5:
+            strong_topic = t["id"]
+        else:
+            strong_topic = t["id"]
+            for other in reversed(all_topics):
+                if other["id"] != t["id"] and other["mastery"] >= 0.5:
+                    strong_topic = other["id"]
+                    break
 
         stubs.append({
             "id": stub_id,
-            "title": f"{w['name']}",
+            "title": t["name"],
             "subtitle": subtitle,
             "duration_min": duration,
             "xp_reward": 35,
-            "skill": w["name"],
+            "skill": t["name"],
             "order": len(stubs) + 1,
             "completed": False,
             "locked": False,
             "screen_count": 5,
             "generated": True,
-            "weak_topic": w["id"],
-            "strong_topic": strong_topic["id"] if strong_topic else w["id"],
+            "weak_topic": t["id"],
+            "strong_topic": strong_topic,
             "weak_mastery": m,
         })
 
