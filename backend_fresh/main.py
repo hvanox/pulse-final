@@ -240,8 +240,6 @@ def login(body: LoginBody):
     if not user or not verify_password(body.password, user["password_hash"]):
         raise HTTPException(status_code=401, detail="invalid_credentials")
     token = create_access_token(user["email"])
-    # Предгенерируем уроки при логине
-    threading.Thread(target=_pregenerate_lessons_bg, args=(user["email"],), daemon=True).start()
     return {"ok": True, "email": user["email"], "name": user["name"], "access_token": token, "token_type": "bearer"}
 
 
@@ -558,9 +556,6 @@ async def v2_generate_lesson(
     save_lesson_cache(db2, user_id, weakTopic or lesson.get("weak_topic", "stocks"), strongTopic or lesson.get("strong_topic", "stocks"), lesson, mastery)
     db2.close()
 
-    # Предгенерируем остальные в фоне
-    threading.Thread(target=_pregenerate_lessons_bg, args=(user_id,), daemon=True).start()
-
     return {**lesson, "completed": False}
 
 
@@ -606,8 +601,6 @@ def v2_complete_lesson(body: CompleteLessonBody, current_user: str = Depends(get
     unlock_achievement(db, user_id, "first_step")
     db.commit()
     db.close()
-    # Инвалидируем устаревшие + предгенерируем новые в фоне
-    threading.Thread(target=_pregenerate_lessons_bg, args=(user_id,), daemon=True).start()
     return {"ok": True, "xp_earned": xp_reward, "streak": streak}
 
 
@@ -710,7 +703,6 @@ def dashboard(userId: Optional[str] = Query(default=None), current_user: str = D
                 "weak_topic": stub["weak_topic"],
                 "strong_topic": stub["strong_topic"],
             }
-            threading.Thread(target=_pregenerate_lessons_bg, args=(user_id,), daemon=True).start()
 
     # Daily missions
     today = date.today().isoformat()
@@ -863,8 +855,6 @@ def onboarding_submit(body: OnboardingSubmitBody, current_user: str = Depends(ge
     add_xp(db, user_id, int(result["xp_bonus"]))
     db.commit()
     db.close()
-    # Сразу после онбординга — предгенерируем уроки
-    threading.Thread(target=_pregenerate_lessons_bg, args=(user_id,), daemon=True).start()
     return {"ok": True, **result}
 
 
