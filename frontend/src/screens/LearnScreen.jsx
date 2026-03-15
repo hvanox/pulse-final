@@ -49,14 +49,11 @@ export default function LearnScreen({ onStartLesson }) {
     </div>
   )
 
-  // Разделяем на пройденные и новые
-  const completedLessons = lessons.filter(l => l.completed)
-  const newLessons = lessons.filter(l => !l.completed)
+  const completedCount = lessons.filter(l => l.completed).length
 
-  // Зигзаг-позиции как в Duolingo
   const getOffset = (i) => {
-    const pattern = [0, 1, 2, 1, 0, -1, -2, -1]
-    return pattern[i % pattern.length] * 48
+    const pattern = [0, 1, 1.8, 1, 0, -1, -1.8, -1]
+    return pattern[i % pattern.length] * 56
   }
 
   return (
@@ -64,28 +61,25 @@ export default function LearnScreen({ onStartLesson }) {
       <div style={s.header}>
         <div style={s.pageTitle}>Обучение</div>
         <div style={s.subtitle}>Уроки подобраны под тебя</div>
-        {completedLessons.length > 0 && (
+        {completedCount > 0 && (
           <div style={s.progressInfo}>
-            Пройдено: {completedLessons.length} из {lessons.length}
+            Пройдено: {completedCount} / {lessons.length}
           </div>
         )}
       </div>
 
       <div style={s.path}>
-        {/* Линия пути */}
         <div style={s.pathLine} />
 
         {lessons.map((lesson, li) => {
           const icon = TOPIC_ICONS[lesson.weak_topic] || "📚"
           const isActive = !lesson.completed && (li === 0 || lessons[li - 1]?.completed)
-          const masteryPct = Math.round((lesson.weak_mastery || 0) * 100)
 
           return (
             <div key={lesson.id} style={{
               ...s.nodeWrap,
-              marginLeft: `calc(50% + ${getOffset(li)}px - 40px)`,
+              marginLeft: `calc(50% + ${getOffset(li)}px - 52px)`,
             }}>
-              {/* Кружок */}
               <div
                 style={{
                   ...s.node,
@@ -93,45 +87,27 @@ export default function LearnScreen({ onStartLesson }) {
                   ...(isActive ? s.nodeActive : {}),
                   ...(!lesson.completed && !isActive ? s.nodeLocked : {}),
                 }}
-                onClick={() => handleStartLesson(lesson)}
+                onClick={() => !lesson.completed && handleStartLesson(lesson)}
               >
-                {/* Прогресс-кольцо */}
-                {!lesson.completed && (
-                  <svg style={s.progressRing} viewBox="0 0 88 88">
-                    <circle cx="44" cy="44" r="40" fill="none" stroke="rgba(0,0,0,0.06)" strokeWidth="4" />
-                    <circle cx="44" cy="44" r="40" fill="none"
-                      stroke={isActive ? "#9c27b0" : "rgba(0,0,0,0.12)"}
-                      strokeWidth="4"
-                      strokeDasharray={`${masteryPct * 2.51} 251`}
-                      strokeLinecap="round"
-                      transform="rotate(-90 44 44)"
-                    />
-                  </svg>
-                )}
-                <div style={s.nodeInner}>
-                  {lesson.completed
-                    ? <span style={s.checkmark}>✓</span>
-                    : <span style={s.nodeIcon}>{icon}</span>
-                  }
-                </div>
+                {/* Иконка или галочка */}
+                <span style={{
+                  fontSize: lesson.completed ? 36 : 38,
+                  filter: lesson.completed ? "none" : isActive ? "none" : "grayscale(1) opacity(0.4)",
+                  lineHeight: 1,
+                }}>
+                  {lesson.completed ? "✓" : icon}
+                </span>
               </div>
 
-              {/* Название */}
               <div style={{
                 ...s.nodeLabel,
-                color: lesson.completed ? "#21a038" : isActive ? "#1a1a1a" : "rgba(0,0,0,0.35)",
+                color: lesson.completed ? "rgba(0,0,0,0.45)" : isActive ? "#1a1a1a" : "rgba(0,0,0,0.3)",
                 fontWeight: isActive ? 700 : 500,
               }}>
                 {lesson.title}
               </div>
 
-              {/* Подзаголовок для активного */}
               {isActive && (
-                <div style={s.nodeSubtitle}>{lesson.subtitle}</div>
-              )}
-
-              {/* Бейдж XP */}
-              {!lesson.completed && isActive && (
                 <div style={s.xpBadge}>+{lesson.xp_reward} XP</div>
               )}
             </div>
@@ -149,69 +125,58 @@ const s = {
     padding: "10px 24px", borderRadius: 10, border: "1px solid rgba(0,0,0,0.1)",
     background: "transparent", color: "#ffdd2d", cursor: "pointer", fontFamily: "inherit",
   },
-  header: { textAlign: "center", marginBottom: 32 },
+  header: { textAlign: "center", marginBottom: 40 },
   pageTitle: { fontSize: 28, fontWeight: 800, color: "#1a1a1a", marginBottom: 4 },
   subtitle: { fontSize: 14, color: "rgba(0,0,0,0.4)", marginBottom: 8 },
   progressInfo: {
     fontSize: 12, color: "#9c27b0", fontWeight: 600,
-    background: "rgba(156,39,176,0.08)", display: "inline-block",
-    padding: "4px 12px", borderRadius: 20,
+    background: "rgba(156,39,176,0.06)", display: "inline-block",
+    padding: "4px 14px", borderRadius: 20,
   },
   path: {
     position: "relative", display: "flex", flexDirection: "column",
-    alignItems: "flex-start", gap: 16, paddingTop: 8,
+    alignItems: "flex-start", gap: 24, paddingTop: 8,
   },
   pathLine: {
     position: "absolute", left: "50%", top: 0, bottom: 0,
-    width: 3, background: "rgba(0,0,0,0.06)", transform: "translateX(-50%)",
+    width: 4, background: "rgba(0,0,0,0.04)", transform: "translateX(-50%)",
     borderRadius: 2, zIndex: 0,
   },
   nodeWrap: {
     display: "flex", flexDirection: "column", alignItems: "center",
-    position: "relative", zIndex: 1, width: 80,
+    position: "relative", zIndex: 1, width: 104,
     transition: "margin-left 0.3s ease",
   },
   node: {
-    width: 80, height: 80, borderRadius: "50%",
+    width: 104, height: 104, borderRadius: "50%",
     display: "flex", alignItems: "center", justifyContent: "center",
     cursor: "pointer", position: "relative",
-    transition: "all 0.2s ease", background: "#fff",
+    transition: "all 0.25s ease",
   },
   nodeCompleted: {
-    background: "#21a038",
-    boxShadow: "0 4px 12px rgba(33,160,56,0.3)",
+    background: "#fff",
+    border: "4px solid #e0e0e0",
+    boxShadow: "0 2px 8px rgba(0,0,0,0.06), inset 0 0 0 2px rgba(0,0,0,0.03)",
+    color: "#bbb",
   },
   nodeActive: {
     background: "#fff",
-    boxShadow: "0 4px 16px rgba(156,39,176,0.25)",
-    border: "3px solid #9c27b0",
+    border: "4px solid #ffdd2d",
+    boxShadow: "0 6px 24px rgba(255,221,45,0.3), 0 2px 8px rgba(0,0,0,0.08)",
   },
   nodeLocked: {
-    background: "#f0f0f0",
-    border: "3px solid rgba(0,0,0,0.08)",
-    opacity: 0.5,
+    background: "#f5f5f5",
+    border: "4px solid rgba(0,0,0,0.06)",
+    boxShadow: "0 2px 6px rgba(0,0,0,0.04)",
     cursor: "default",
   },
-  progressRing: {
-    position: "absolute", top: -4, left: -4,
-    width: 88, height: 88,
-  },
-  nodeInner: {
-    display: "flex", alignItems: "center", justifyContent: "center",
-  },
-  checkmark: { fontSize: 28, color: "#fff", fontWeight: 700 },
-  nodeIcon: { fontSize: 32 },
   nodeLabel: {
-    fontSize: 13, marginTop: 8, textAlign: "center",
-    maxWidth: 100, lineHeight: 1.2,
-  },
-  nodeSubtitle: {
-    fontSize: 11, color: "rgba(0,0,0,0.4)", textAlign: "center",
-    maxWidth: 120, marginTop: 2,
+    fontSize: 13, marginTop: 10, textAlign: "center",
+    maxWidth: 110, lineHeight: 1.3,
   },
   xpBadge: {
-    fontSize: 10, fontWeight: 700, color: "#9c27b0",
-    background: "rgba(156,39,176,0.1)", padding: "2px 8px",
-    borderRadius: 10, marginTop: 4,
+    fontSize: 11, fontWeight: 700, color: "#b8860b",
+    background: "rgba(255,221,45,0.15)", padding: "3px 10px",
+    borderRadius: 12, marginTop: 4,
   },
 }
