@@ -66,7 +66,12 @@ export default function LearnScreen({ onStartLesson }) {
 
         {lessons.map((lesson, li) => {
           const icon = TOPIC_ICONS[lesson.weak_topic] || "📚"
-          const isActive = !lesson.completed && (li === 0 || lessons[li - 1]?.completed)
+
+          // Считаем сколько непройденных уже доступно до этого
+          const uncompletedBefore = lessons.slice(0, li).filter(l => !l.completed).length
+          const isAvailable = !lesson.completed && uncompletedBefore < 2
+          const isLocked = !lesson.completed && !isAvailable
+          const canClick = lesson.completed || isAvailable
 
           return (
             <div key={lesson.id} style={{
@@ -77,31 +82,30 @@ export default function LearnScreen({ onStartLesson }) {
                 style={{
                   ...s.node,
                   ...(lesson.completed ? s.nodeCompleted : {}),
-                  ...(isActive ? s.nodeActive : {}),
-                  ...(!lesson.completed && !isActive ? s.nodeLocked : {}),
+                  ...(isAvailable ? s.nodeActive : {}),
+                  ...(isLocked ? s.nodeLocked : {}),
                 }}
-                onClick={() => !lesson.completed && handleStartLesson(lesson)}
+                onClick={() => canClick && handleStartLesson(lesson)}
               >
-                {/* Иконка или галочка */}
                 <span style={{
-                  fontSize: lesson.completed ? 38 : 38,
-                  filter: lesson.completed ? "none" : isActive ? "none" : "grayscale(1) opacity(0.4)",
+                  fontSize: 38,
+                  filter: lesson.completed ? "none" : isAvailable ? "none" : "grayscale(1) opacity(0.4)",
                   lineHeight: 1,
                   color: lesson.completed ? "#fff" : "inherit",
                 }}>
-                  {lesson.completed ? "✓" : icon}
+                  {lesson.completed ? "✓" : isLocked ? "🔒" : icon}
                 </span>
               </div>
 
               <div style={{
                 ...s.nodeLabel,
-                color: lesson.completed ? "#21a038" : isActive ? "#1a1a1a" : "rgba(0,0,0,0.3)",
-                fontWeight: isActive ? 700 : 500,
+                color: lesson.completed ? "#21a038" : isAvailable ? "#1a1a1a" : "rgba(0,0,0,0.3)",
+                fontWeight: isAvailable ? 700 : 500,
               }}>
                 {lesson.title}
               </div>
 
-              {isActive && (
+              {isAvailable && (
                 <div style={s.xpBadge}>+{lesson.xp_reward} XP</div>
               )}
             </div>
