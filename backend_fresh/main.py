@@ -454,43 +454,71 @@ def v2_modules(userId: Optional[str] = Query(default=None), current_user: str = 
 
 @app.get("/v2/lessons")
 def v2_lessons(moduleId: str, userId: Optional[str] = Query(default=None), current_user: str = Depends(get_current_user)):
-    """Сначала статические уроки, потом AI-уроки на основе mastery."""
+    """Статические уроки отсортированы по слабым темам из онбординга, потом AI-уроки."""
     user_id = resolve_user_id(userId, current_user)
     db = get_db()
     completed = {r["lesson_id"] for r in db.execute("SELECT lesson_id FROM lesson_completions WHERE user_id=?", (user_id,)).fetchall()}
     mastery = ml_engine.compute_mastery_from_db(db, user_id)
+
+    # Получаем результаты онбординга — какие темы слабые
+    onboarding_row = db.execute("SELECT topic_scores FROM onboarding_results WHERE user_id=?", (user_id,)).fetchone()
     db.close()
 
-    out = []
-    order = 0
+    topic_weakness = {}  # topic_id -> score (0=слабый, 1=сильный)
+    if onboarding_row and onboarding_row["topic_scores"]:
+        try:
+            topic_scores = json.loads(onboarding_row["topic_scores"])
+            for topic_id, data in topic_scores.items():
+                score = data.get("score", data.get("mastery", 0.5)) if isinstance(data, dict) else 0.5
+                topic_weakness[topic_id] = score
+        except (json.JSONDecodeError, TypeError):
+            pass
 
-    # 1. Статические уроки (все модули) — идут первыми
+    # Собираем все статические уроки
+    all_static = []
     for module in MODULES:
         for lesson in get_module_lessons(module["id"]):
-            order += 1
-            out.append({
-                "id": lesson["id"],
-                "title": lesson["title"],
-                "subtitle": lesson["subtitle"],
-                "duration_min": lesson["duration_min"],
-                "xp_reward": lesson["xp_reward"],
-                "skill": lesson["skill"],
-                "order": order,
-                "completed": lesson["id"] in completed,
-                "locked": order > 1 and out[-1]["id"] not in completed and not out[-1].get("completed"),
-                "screen_count": len(lesson["screens"]),
-                "generated": False,
+            topic = lesson.get("skill_topic", "stocks")
+            weakness = topic_weakness.get(topic, 0.5)
+            # Также учитываем текущий mastery
+            current_m = mastery.get(topic, {}).get("mastery", weakness)
+            # Комбинируем: онбординг + текущий mastery (слабые первыми)
+            combined_score = (weakness + current_m) / 2
+            all_static.append({
+                **lesson,
+                "_sort_score": combined_score,
             })
+
+    # Сортируем: слабые темы первыми
+    all_static.sort(key=lambda x: x["_sort_score"])
+
+    out = []
+    for order, lesson in enumerate(all_static, 1):
+        is_completed = lesson["id"] in completed
+        is_locked = order > 1 and not out[-1].get("completed", False)
+        out.append({
+            "id": lesson["id"],
+            "title": lesson["title"],
+            "subtitle": lesson["subtitle"],
+            "duration_min": lesson["duration_min"],
+            "xp_reward": lesson["xp_reward"],
+            "skill": lesson["skill"],
+            "order": order,
+            "completed": is_completed,
+            "locked": is_locked,
+            "screen_count": len(lesson["screens"]),
+            "generated": False,
+        })
 
     # Все статические пройдены?
     all_static_done = all(l["completed"] for l in out)
 
-    # 2. AI-уроки — после статических
+    # AI-уроки — после статических, тоже на основе mastery
     ai_stubs = get_lesson_stubs(mastery)
     for stub in ai_stubs:
-        order += 1
+        order = len(out) + 1
         stub["order"] = order
-        stub["locked"] = not all_static_done  # AI-уроки разлочены только когда статика пройдена
+        stub["locked"] = not all_static_done
         out.append(stub)
 
     return out
@@ -634,31 +662,47 @@ def dashboard(userId: Optional[str] = Query(default=None), current_user: str = D
     ach_count = db.execute("SELECT COUNT(*) AS cnt FROM user_achievements WHERE user_id=?", (user_id,)).fetchone()["cnt"]
     completed_ids = {r["lesson_id"] for r in db.execute("SELECT lesson_id FROM lesson_completions WHERE user_id=?", (user_id,)).fetchall()}
 
-    # Next lesson — сначала статический, потом AI
+    # Next lesson — по слабым темам из онбординга
+    mastery = ml_engine.compute_mastery_from_db(db, user_id)
     next_lesson_data = None
-    # Ищем незавершённый статический урок
+
+    # Онбординг → сортируем статические уроки по слабости
+    onboarding_row = db.execute("SELECT topic_scores FROM onboarding_results WHERE user_id=?", (user_id,)).fetchone()
+    topic_weakness = {}
+    if onboarding_row and onboarding_row["topic_scores"]:
+        try:
+            ts = json.loads(onboarding_row["topic_scores"])
+            for tid, d in ts.items():
+                topic_weakness[tid] = d.get("score", d.get("mastery", 0.5)) if isinstance(d, dict) else 0.5
+        except (json.JSONDecodeError, TypeError):
+            pass
+
+    # Собираем и сортируем статические уроки
+    all_static = []
     for module in MODULES:
-        if user_level < module["required_level"]:
-            continue
         for lesson in get_module_lessons(module["id"]):
-            if lesson["id"] not in completed_ids:
-                next_lesson_data = {
-                    "id": lesson["id"],
-                    "title": lesson["title"],
-                    "subtitle": lesson["subtitle"],
-                    "duration_min": lesson["duration_min"],
-                    "xp_reward": lesson["xp_reward"],
-                    "module_title": module["title"],
-                    "module_icon": module["icon"],
-                    "generated": False,
-                }
-                break
-        if next_lesson_data:
+            topic = lesson.get("skill_topic", "stocks")
+            w = topic_weakness.get(topic, 0.5)
+            m = mastery.get(topic, {}).get("mastery", w)
+            all_static.append({**lesson, "_score": (w + m) / 2})
+    all_static.sort(key=lambda x: x["_score"])
+
+    for lesson in all_static:
+        if lesson["id"] not in completed_ids:
+            next_lesson_data = {
+                "id": lesson["id"],
+                "title": lesson["title"],
+                "subtitle": lesson["subtitle"],
+                "duration_min": lesson["duration_min"],
+                "xp_reward": lesson["xp_reward"],
+                "module_title": "Твоё обучение",
+                "module_icon": "🧠",
+                "generated": False,
+            }
             break
 
     # Если все статические пройдены — AI-урок
     if not next_lesson_data:
-        mastery = ml_engine.compute_mastery_from_db(db, user_id)
         ai_stubs = get_lesson_stubs(mastery)
         if ai_stubs:
             stub = ai_stubs[0]
