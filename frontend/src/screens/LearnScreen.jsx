@@ -72,6 +72,8 @@ export default function LearnScreen({ onStartLesson }) {
           const isAvailable = !lesson.completed && uncompletedBefore < 2
           const isLocked = !lesson.completed && !isAvailable
           const canClick = lesson.completed || isAvailable
+          // Название видно: пройденные + 2 доступных + 2 следующих заблокированных
+          const showName = lesson.completed || isAvailable || (isLocked && uncompletedBefore < 4)
 
           return (
             <div key={lesson.id} style={{
@@ -97,13 +99,15 @@ export default function LearnScreen({ onStartLesson }) {
                 </span>
               </div>
 
-              <div style={{
-                ...s.nodeLabel,
-                color: lesson.completed ? "#21a038" : isAvailable ? "#1a1a1a" : "rgba(0,0,0,0.3)",
-                fontWeight: isAvailable ? 700 : 500,
-              }}>
-                {lesson.title}
-              </div>
+              {showName && (
+                <div style={{
+                  ...s.nodeLabel,
+                  color: lesson.completed ? "#21a038" : isAvailable ? "#1a1a1a" : "rgba(0,0,0,0.3)",
+                  fontWeight: isAvailable ? 700 : 500,
+                }}>
+                  {lesson.title}
+                </div>
+              )}
 
               {isAvailable && (
                 <div style={s.xpBadge}>+{lesson.xp_reward} XP</div>
