@@ -89,8 +89,8 @@ export default function App() {
 
   const handleLessonComplete = () => {
     setRefreshKey(k => k + 1)
-    setScreen("home")
-    setTab("home")
+    setScreen("learn")
+    setTab("learn")
   }
 
   const handleBack = () => {

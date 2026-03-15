@@ -49,8 +49,6 @@ export default function LearnScreen({ onStartLesson }) {
     </div>
   )
 
-  const completedCount = lessons.filter(l => l.completed).length
-
   const getOffset = (i) => {
     const pattern = [0, 1, 1.8, 1, 0, -1, -1.8, -1]
     return pattern[i % pattern.length] * 56
@@ -61,11 +59,6 @@ export default function LearnScreen({ onStartLesson }) {
       <div style={s.header}>
         <div style={s.pageTitle}>Обучение</div>
         <div style={s.subtitle}>Уроки подобраны под тебя</div>
-        {completedCount > 0 && (
-          <div style={s.progressInfo}>
-            Пройдено: {completedCount} / {lessons.length}
-          </div>
-        )}
       </div>
 
       <div style={s.path}>
@@ -91,9 +84,10 @@ export default function LearnScreen({ onStartLesson }) {
               >
                 {/* Иконка или галочка */}
                 <span style={{
-                  fontSize: lesson.completed ? 36 : 38,
+                  fontSize: lesson.completed ? 38 : 38,
                   filter: lesson.completed ? "none" : isActive ? "none" : "grayscale(1) opacity(0.4)",
                   lineHeight: 1,
+                  color: lesson.completed ? "#fff" : "inherit",
                 }}>
                   {lesson.completed ? "✓" : icon}
                 </span>
@@ -101,7 +95,7 @@ export default function LearnScreen({ onStartLesson }) {
 
               <div style={{
                 ...s.nodeLabel,
-                color: lesson.completed ? "rgba(0,0,0,0.45)" : isActive ? "#1a1a1a" : "rgba(0,0,0,0.3)",
+                color: lesson.completed ? "#21a038" : isActive ? "#1a1a1a" : "rgba(0,0,0,0.3)",
                 fontWeight: isActive ? 700 : 500,
               }}>
                 {lesson.title}
@@ -128,11 +122,6 @@ const s = {
   header: { textAlign: "center", marginBottom: 40 },
   pageTitle: { fontSize: 28, fontWeight: 800, color: "#1a1a1a", marginBottom: 4 },
   subtitle: { fontSize: 14, color: "rgba(0,0,0,0.4)", marginBottom: 8 },
-  progressInfo: {
-    fontSize: 12, color: "#9c27b0", fontWeight: 600,
-    background: "rgba(156,39,176,0.06)", display: "inline-block",
-    padding: "4px 14px", borderRadius: 20,
-  },
   path: {
     position: "relative", display: "flex", flexDirection: "column",
     alignItems: "flex-start", gap: 24, paddingTop: 8,
@@ -154,10 +143,9 @@ const s = {
     transition: "all 0.25s ease",
   },
   nodeCompleted: {
-    background: "#fff",
-    border: "4px solid #e0e0e0",
-    boxShadow: "0 2px 8px rgba(0,0,0,0.06), inset 0 0 0 2px rgba(0,0,0,0.03)",
-    color: "#bbb",
+    background: "#21a038",
+    border: "4px solid #1b8a2f",
+    boxShadow: "0 4px 14px rgba(33,160,56,0.3), 0 2px 6px rgba(0,0,0,0.06)",
   },
   nodeActive: {
     background: "#fff",

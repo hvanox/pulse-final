@@ -170,7 +170,7 @@ export default function LessonScreen({ lessonId, aiLessonData, onComplete, onBac
             )}
           </div>
           <div style={s.completionActions}>
-            <button style={s.primaryBtn} onClick={onComplete}>На главную</button>
+            <button style={s.primaryBtn} onClick={onComplete}>Продолжить обучение</button>
           </div>
         </div>
       </div>
