@@ -18,10 +18,15 @@ export default function LessonScreen({ lessonId, aiLessonData, onComplete, onBac
   useEffect(() => {
     setLoading(true)
 
-    // AI-урок: загружаем через LLM
-    const loadPromise = aiLessonData?.generated
-      ? generateLesson(aiLessonData.weak_topic, aiLessonData.strong_topic)
-      : getLessonDetail(lessonId)
+    // AI-урок: из префетча или генерируем
+    let loadPromise
+    if (aiLessonData?._prefetched) {
+      loadPromise = Promise.resolve(aiLessonData._prefetched)
+    } else if (aiLessonData?.generated) {
+      loadPromise = generateLesson(aiLessonData.weak_topic, aiLessonData.strong_topic)
+    } else {
+      loadPromise = getLessonDetail(lessonId)
+    }
 
     loadPromise.then(async (l) => {
       // AI-уроки уже содержат все вопросы — пропускаем адаптивные

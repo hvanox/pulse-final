@@ -240,6 +240,8 @@ def login(body: LoginBody):
     if not user or not verify_password(body.password, user["password_hash"]):
         raise HTTPException(status_code=401, detail="invalid_credentials")
     token = create_access_token(user["email"])
+    # Предгенерируем уроки при логине
+    threading.Thread(target=_pregenerate_lessons_bg, args=(user["email"],), daemon=True).start()
     return {"ok": True, "email": user["email"], "name": user["name"], "access_token": token, "token_type": "bearer"}
 
 
@@ -807,6 +809,8 @@ def onboarding_submit(body: OnboardingSubmitBody, current_user: str = Depends(ge
     add_xp(db, user_id, int(result["xp_bonus"]))
     db.commit()
     db.close()
+    # Сразу после онбординга — предгенерируем уроки
+    threading.Thread(target=_pregenerate_lessons_bg, args=(user_id,), daemon=True).start()
     return {"ok": True, **result}
 
 

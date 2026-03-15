@@ -1,20 +1,40 @@
-import { useState, useEffect } from "react"
-import { getModuleLessons } from "../api"
+import { useState, useEffect, useRef } from "react"
+import { getModuleLessons, generateLesson } from "../api"
 
 export default function LearnScreen({ onStartLesson }) {
   const [lessons, setLessons] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const prefetchedRef = useRef(null)
 
   const loadLessons = () => {
     setLoading(true)
     setError(null)
     getModuleLessons("m_ai")
-      .then(data => { setLessons(data); setLoading(false) })
+      .then(data => {
+        setLessons(data)
+        setLoading(false)
+        // Префетч первого урока — чтобы при клике открылся мгновенно
+        if (data.length > 0 && data[0].generated && !data[0].locked) {
+          const first = data[0]
+          generateLesson(first.weak_topic, first.strong_topic)
+            .then(lesson => { prefetchedRef.current = { key: first.weak_topic, lesson } })
+            .catch(() => {})
+        }
+      })
       .catch(e => { setError(e.message || "Ошибка"); setLoading(false) })
   }
 
   useEffect(() => { loadLessons() }, [])
+
+  const handleStartLesson = (lesson) => {
+    // Если урок уже префетчен — передаём готовые данные
+    if (prefetchedRef.current?.key === lesson.weak_topic) {
+      onStartLesson(lesson.id, { ...lesson, _prefetched: prefetchedRef.current.lesson })
+    } else {
+      onStartLesson(lesson.id, lesson)
+    }
+  }
 
   if (loading) return <div style={s.loading}>Загрузка уроков...</div>
   if (error) return <div style={s.loading}><div style={{fontSize:48,marginBottom:16}}>⚠️</div><div style={{marginBottom:16}}>{error}</div><button onClick={loadLessons} style={{padding:"10px 24px",borderRadius:10,border:"1px solid rgba(0,0,0,0.1)",background:"transparent",color:"#ffdd2d",cursor:"pointer",fontFamily:"inherit"}}>Повторить</button></div>
@@ -30,7 +50,7 @@ export default function LearnScreen({ onStartLesson }) {
             ...s.lessonRow,
             opacity: lesson.locked ? 0.4 : 1,
             cursor: lesson.locked ? "default" : "pointer",
-          }} onClick={() => !lesson.locked && onStartLesson(lesson.id, lesson)}>
+          }} onClick={() => !lesson.locked && handleStartLesson(lesson)}>
             <div style={{
               ...s.lessonDot,
               background: lesson.locked ? "rgba(0,0,0,0.06)" : "#9c27b0",
