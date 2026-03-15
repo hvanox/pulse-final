@@ -18,9 +18,16 @@ LEVELS = [
 ]
 
 ACHIEVEMENTS = [
-    {"id": "first_step", "title": "Первый урок", "xp_reward": 20},
-    {"id": "first_buy", "title": "Первая покупка", "xp_reward": 20},
-    {"id": "streak_7", "title": "Стрик 7 дней", "xp_reward": 50},
+    {"id": "first_step", "name": "Первый шаг", "icon": "🎓", "description": "Пройди свой первый урок", "category": "learning", "xp_reward": 20},
+    {"id": "first_buy", "name": "Первая сделка", "icon": "🛒", "description": "Купи свою первую акцию", "category": "portfolio", "xp_reward": 20},
+    {"id": "streak_7", "name": "Неделя подряд", "icon": "🔥", "description": "Заходи в приложение 7 дней подряд", "category": "streak", "xp_reward": 50},
+    {"id": "lessons_5", "name": "Пятёрка", "icon": "📚", "description": "Пройди 5 уроков", "category": "learning", "xp_reward": 30},
+    {"id": "lessons_10", "name": "Десятка", "icon": "🏅", "description": "Пройди 10 уроков", "category": "learning", "xp_reward": 50},
+    {"id": "trader", "name": "Трейдер", "icon": "📊", "description": "Соверши 10 сделок", "category": "portfolio", "xp_reward": 40},
+    {"id": "diversified", "name": "Диверсификация", "icon": "🎯", "description": "Купи акции 3 разных компаний", "category": "portfolio", "xp_reward": 30},
+    {"id": "profit_10", "name": "В плюсе", "icon": "💰", "description": "Получи доходность портфеля +10%", "category": "portfolio", "xp_reward": 50},
+    {"id": "streak_30", "name": "Месяц подряд", "icon": "⚡", "description": "Заходи 30 дней подряд", "category": "streak", "xp_reward": 100},
+    {"id": "all_topics", "name": "Всезнайка", "icon": "🧠", "description": "Достигни 50% mastery во всех темах", "category": "learning", "xp_reward": 100},
 ]
 ACHIEVEMENT_MAP = {a["id"]: a for a in ACHIEVEMENTS}
 
