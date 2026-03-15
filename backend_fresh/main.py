@@ -22,8 +22,6 @@ from llm_generator import (
     get_recent_questions, get_lesson_stubs, analyze_mastery,
     save_lesson_cache, get_cached_lesson, clear_lesson_cache, invalidate_stale_cache,
 )
-import asyncio
-import threading
 from cards import CARDS
 from database import START_BALANCE, get_db, init_db
 from lessons_v2 import LESSONS, LESSON_MAP, MODULE_MAP, MODULES, get_lesson, get_module_lessons
@@ -495,34 +493,7 @@ def v2_lessons(moduleId: str, userId: Optional[str] = Query(default=None), curre
         stub["locked"] = not all_static_done  # AI-уроки разлочены только когда статика пройдена
         out.append(stub)
 
-    # Предгенерация в фоне
-    if all_static_done:
-        threading.Thread(target=_pregenerate_lessons_bg, args=(user_id,), daemon=True).start()
-
     return out
-
-
-def _pregenerate_lessons_bg(user_id: str):
-    """Фоновая предгенерация уроков для пользователя."""
-    try:
-        db = get_db()
-        mastery = ml_engine.compute_mastery_from_db(db, user_id)
-        # Удаляем только устаревшие (mastery изменился)
-        invalidate_stale_cache(db, user_id, mastery)
-        stubs = get_lesson_stubs(mastery)
-        for stub in stubs[:3]:
-            cached = get_cached_lesson(db, user_id, stub["weak_topic"], mastery)
-            if not cached:
-                loop = asyncio.new_event_loop()
-                lesson = loop.run_until_complete(
-                    generate_lesson(mastery, stub["weak_topic"], stub["strong_topic"])
-                )
-                loop.close()
-                if lesson:
-                    save_lesson_cache(db, user_id, stub["weak_topic"], stub["strong_topic"], lesson, mastery)
-        db.close()
-    except Exception:
-        pass
 
 
 @app.get("/v2/generate-lesson")

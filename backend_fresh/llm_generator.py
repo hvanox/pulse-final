@@ -6,7 +6,7 @@
 import json
 import os
 import uuid
-from openai import OpenAI
+from openai import AsyncOpenAI
 
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
 MODEL = "arcee-ai/trinity-large-preview:free"
@@ -122,12 +122,12 @@ async def generate_question(topic: str, difficulty: int, recent_questions: list[
         for q in recent_questions[:10]:
             user_prompt += f"- {q}\n"
 
-    client = OpenAI(
+    client = AsyncOpenAI(
         base_url="https://openrouter.ai/api/v1",
         api_key=OPENROUTER_API_KEY,
     )
 
-    response = client.chat.completions.create(
+    response = await client.chat.completions.create(
         model=MODEL,
         messages=[
             {"role": "system", "content": SYSTEM_PROMPT},
@@ -346,12 +346,12 @@ async def generate_lesson(mastery: dict, weak_topic: str = None, strong_topic: s
 
 Сгенерируй урок."""
 
-    client = OpenAI(
+    client = AsyncOpenAI(
         base_url="https://openrouter.ai/api/v1",
         api_key=OPENROUTER_API_KEY,
     )
 
-    response = client.chat.completions.create(
+    response = await client.chat.completions.create(
         model=MODEL,
         messages=[
             {"role": "system", "content": LESSON_SYSTEM_PROMPT},
